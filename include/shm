@@ -1,0 +1,131 @@
+// vim setf cpp:
+/**
+ * shm.hpp - 
+ * @author: Jonathan Beard
+ * @version: Thu Aug  1 14:26:34 2013
+ */
+#ifndef _SHM_HPP_
+#define _SHM_HPP_  1
+
+#include <cstdlib>
+#include <exception>
+#include <string>
+
+class bad_shm_alloc : public std::exception
+{
+public:
+   bad_shm_alloc( const std::string message );
+   
+   virtual const char* what() const noexcept;
+
+private:
+   const std::string message;
+};
+
+class page_alignment_exception: public std::exception
+{
+public:
+   page_alignment_exception( const std::string message );
+   virtual const char* what() const noexcept;
+
+private:
+   const std::string message;
+};
+
+class invalid_key_exception : public std::exception
+{
+public:
+   invalid_key_exception( const std::string message );
+   virtual const char* what() const noexcept;
+private:
+   const std::string message;
+};
+
+class shm{
+public:
+   
+   shm()    = delete;
+   ~shm()   = delete;;
+   
+   /**
+    * genkey - generate a shared key at the memory 
+    * address pointed to by ptr *key with length 
+    * length.
+    * @param   buffer - char *
+    * @param   length - std::size_t
+    */
+   static void genkey(char *buffer, std::size_t length);
+
+   /**
+    * init - initialize SHM segment with file descriptor
+    * key, with the number of items (nitems) and number
+    * of bytes each for each item (nbytes).  Returns NULL if error, and
+    * prints the error code to std::cerr 
+    * @param   key - const char *
+    * @param   nbytes - std::size_t
+    * @param   zero  - zero before returning memory, default: true
+    * @return  void* - ptr to beginning of memory allocated
+    */
+   static void*   init( const char *key, 
+                        const std::size_t nbytes,
+                        const bool   zero = true,
+                        void   *ptr = nullptr );
+
+   /** 
+    * open - opens the shared memory segment with the file
+    * descriptor stored at key.
+    * @param   key - const char *
+    * @return  void* - start of allocated memory, or NULL if
+    *                  error
+    */
+   static void*   open( const char *key );
+
+   /**
+    * close - returns true if successful, false otherwise.
+    * @param   key - const char*
+    * @param   ptr - start ptr to mapped region
+    * @param   nbytes - number of bytes for each element in mapped region
+    * @param   nitems - total number of items with size nbytes
+    * @param   zero  - zero mapped region before closing, default: false
+    * @return  bool - true if successful.
+    */
+   static bool    close( const char *key, 
+                         void *ptr,
+                         const std::size_t nbytes,
+                         const bool   zero = false ,
+                         const bool   unlink = false );
+
+   template < class T > 
+      static T* einit( const std::string &&key,
+                       const std::size_t nitems )
+   {
+      return( reinterpret_cast< T* >( 
+         shm::init( key.c_str(),
+                    nitems * sizeof( T ),
+                    true,
+                    nullptr ) ) );
+   }
+#if __linux
+   /**
+    * move_to_tid_numa - checks the pages at 'pages' pointer,
+    * and makes sure that they are on the NUMA node of the 
+    * calling thread. If the pages are not on the same 
+    * NUMA node as the caller then the appropriate system
+    * calls are made to migrate the pages and false is 
+    * returned, otherwise they are left alone and true 
+    * is returned.
+    * @param   thread_id - pid_t, id of calling thread
+    * @param   pages - void**, start pointer of pages, must
+    * be page aligned.
+    * @param   n_bytes - std::size_t, length of the allocation
+    * in pages, must be a multiple of pages, otherwise an 
+    * exception will be thrown
+    */
+   static bool move_to_tid_numa( const pid_t thread_id,
+                                 void *ptr,
+                                 const std::size_t n_bytes );
+#endif
+                           
+};
+
+#endif /* END _SHM_HPP_ */
