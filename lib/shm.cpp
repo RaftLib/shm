@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <errno.h>
 #include <assert.h>
 #include <cstdint>
@@ -213,7 +212,7 @@ shm::init( const char * const key,
       std::stringstream ss;
       ss << "Failed to truncate shm for file descriptor (" << fd << ") ";
       ss << "with number of bytes (" << nbytes << ").  Error code returned: ";
-      ss << strerror( errno );
+      ss << std::strerror( errno );
       shm_unlink( key );
       throw bad_shm_alloc( ss.str() );
    }
