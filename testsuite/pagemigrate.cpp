@@ -20,7 +20,8 @@
 #include <cstdint>
 #include <iostream>
 #include <shm>
-
+#include <cassert>
+#ifdef __linux
 /** for get cpu **/
 #if (__GLIBC_MINOR__ < 14) && (__GLIBC__ <= 2)
 
@@ -39,12 +40,11 @@
 #endif
 
 #endif /** end glibc check **/
-
+#include <pthread.h>
 #include <sched.h>
-#endif /** end if linux **/
-
-
-#ifdef __linux
+#include <sys/sysinfo.h>
+#include <numaif.h>
+#include <numa.h>
 void 
 set_affinity( const std::size_t desired_core )
 {
@@ -83,11 +83,36 @@ set_affinity( const std::size_t desired_core )
    return;
 }
 
-
-static void thread( void *ptr )
+struct Data
 {
+   Data( void **ptr ) : ptr( ptr )
+   {
+      shm::genkey( key_buff, 30 );
+   }
+   char key_buff[ 30 ];
+   void **ptr;
+};
+
+void* thr( void *ptr )
+{
+   Data *data( reinterpret_cast< Data* >( ptr ) );
    const auto max_core( get_nprocs_conf() - 1 );
    set_affinity( max_core );
+   try
+   {
+      *data->ptr = reinterpret_cast< std::int32_t* >( shm::init( data->key_buff, 0x1000 ) );
+   }
+   catch( bad_shm_alloc ex )
+   {
+      std::cerr << ex.what() << "\n";
+      exit( EXIT_FAILURE );
+   }
+   std::int32_t *ptr_int( reinterpret_cast< std::int32_t* >( *data->ptr ) );
+   for( auto i( 0 ); i < 100; i++ )
+   {  
+      ptr_int[ i ] = i;
+   }
+   pthread_exit( nullptr );
 }
 
 #endif
@@ -96,32 +121,43 @@ static void thread( void *ptr )
 int
 main( int argc, char **argv )
 {
-   char key_buff[ 30 ];
-   shm::genkey( key_buff, 30 );
-   std::int32_t *ptr( nullptr );
-   try
+   /** no facilities for this exist on OS X so why even try **/
+#if __linux
+   if( numa_num_configured_nodes() == 1 )
    {
-      ptr = reinterpret_cast< std::int32_t* >( shm::init( key_buff, 0x1000 ) );
+      std::cerr << "only one numa node, exiting!\n";
+      /** no point in continuing, there's only one **/
+      return( EXIT_SUCCESS );
    }
-   catch( bad_shm_alloc ex )
-   {
-      std::cerr << ex.what() << "\n";
-      exit( EXIT_FAILURE );
-   }
-   for( int i( 0 ); i < 100; i++ )
-   {  
-      ptr[ i ] = i;
-   }
-
-   
-   shm::move_to_tid_numa( 
+   set_affinity( 0 );
+   const auto my_numa( numa_node_of_cpu( 0 ) );
+   std::cerr << "calling thread numa node: " << my_numa << "\n";
+   void *ptr( nullptr );
+   pthread_t thread;
+   Data d( &ptr );
+   /** create thread, move to new NUMA node, allocate mem there **/
+   pthread_create( &thread, nullptr, thr, &d );
+   /** join **/
+   pthread_join( thread, nullptr ); 
+   /** get current numa node of pages, checking the first should be sufficient **/
+   int status[ 1 ];
+   move_pages( 0, 1, &ptr, nullptr,status,0 );
+   const auto pages_before( status[ 0 ] );
+   std::cerr << "numa node before move: " << pages_before << "\n";
+   assert( my_numa != pages_before );
+   shm::move_to_tid_numa( 0, ptr, 0x1000 );
+   move_pages( 0, 1, &ptr, nullptr,status,0 );
+   const auto pages_after( status[ 0 ] );
+   std::cerr << "numa node after move: " << pages_after << "\n";
+   assert( pages_after == my_numa );
    
    /** if we get to this point then we assume that the mem is writable **/
-   shm::close( key_buff, 
+   shm::close( d.key_buff, 
                reinterpret_cast<void**>(&ptr), 
                0x1000,
                true,
                true );
+#endif               
    /** should get here and be done **/
    return( EXIT_SUCCESS );
 }

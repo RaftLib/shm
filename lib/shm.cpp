@@ -355,22 +355,22 @@ shm::close( const char *key,
    return( true );
 }
 
-#ifdef __linux
+#if __linux
 bool
-move_to_tid_numa( const pid_t thread_id,
-                  void *ptr,
-                  const std::size_t nbytes )
+shm::move_to_tid_numa( const pid_t thread_id,
+                       void *ptr,
+                       const std::size_t nbytes )
 {
    /** check alignment of pages first **/
    const auto page_size( sysconf( _SC_PAGESIZE ) );
    
    const auto ptr_addr( 
       reinterpret_cast< std::uintptr_t >( ptr ) );
-   if( ptr_addr % page_size == 0 )
+   if( (ptr_addr % page_size) != 0 )
    {
       std::stringstream ss;
       ss << "Variable 'ptr' must be page aligned, currently it is(" << 
-       ptr_addr << "), please fix...exiting!!\n";
+       ptr_addr % page_size << "), off please fix...exiting!!\n";
       throw page_alignment_exception( ss.str() );
    }
 

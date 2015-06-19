@@ -8,13 +8,14 @@ LINUXADD =
 AM_LDFLAGS = 
 else
 if LINUX
-LINUXADD = -lrt -lnuma
+LINUXADD = -lrt -lnuma -lpthread
 AM_LDFLAGS = -static -Wl,--no-whole-archive
 endif
 endif
 
 LDADD= -L$(top_srcdir)/lib -lshm $(LINUXADD)
-TESTS = alloc close nokey outofrange zerobytes wrongkey zerokeylength genkeyoverflow
+TESTS = alloc close nokey outofrange zerobytes wrongkey zerokeylength genkeyoverflow\
+        pagemigrate
 XFAIL_TESTS = nokey outofrange zerobytes zerokeylength genkeyoverflow
 
 check_PROGRAMS = 
@@ -41,4 +42,8 @@ zerokeylength_SOURCES = zerokeylength.cpp
 
 check_PROGRAMS += genkeyoverflow
 genkeyoverflow_SOURCES = genkeyoverflow.cpp
+
+check_PROGRAMS += pagemigrate
+pagemigrate_SOURCES = pagemigrate.cpp
+
 CLEANFILES = *.log *.sum lldb
