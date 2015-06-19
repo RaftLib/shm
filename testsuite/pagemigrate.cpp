@@ -46,7 +46,7 @@
 
 #ifdef __linux
 void 
-dre::dummy_set_affinity( const std::size_t desired_core )
+set_affinity( const std::size_t desired_core )
 {
    /**
     * pin the current thread 
@@ -86,7 +86,8 @@ dre::dummy_set_affinity( const std::size_t desired_core )
 
 static void thread( void *ptr )
 {
-      
+   const auto max_core( get_nprocs_conf() - 1 );
+   set_affinity( max_core );
 }
 
 #endif
@@ -95,8 +96,8 @@ static void thread( void *ptr )
 int
 main( int argc, char **argv )
 {
-   char key_buff[ 256 ];
-   shm::genkey( key_buff, 256 );
+   char key_buff[ 30 ];
+   shm::genkey( key_buff, 30 );
    std::int32_t *ptr( nullptr );
    try
    {
@@ -117,7 +118,7 @@ main( int argc, char **argv )
    
    /** if we get to this point then we assume that the mem is writable **/
    shm::close( key_buff, 
-               reinterpret_cast<void*>(ptr), 
+               reinterpret_cast<void**>(&ptr), 
                0x1000,
                true,
                true );
