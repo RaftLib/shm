@@ -31,7 +31,26 @@ AC_FUNC_MALLOC
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([ftruncate memset munmap strerror shm_unlink shm_open])
 
-AM_CONDITIONAL(BUILD_OS_IS_DARWIN, [test x"$build_os" = darwin])
+case $host_os in 
+   darwin*)
+      os_bsd=no
+      os_darwin=yes
+      os_linux=no
+   ;;
+   linux*)
+      os_bsd=no
+      os_darwin=no
+      os_linux=yes
+   ;;
+   bsd*)
+      os_bsd=yes
+      os_darwin=no
+      os_linux=no
+   ;;
+esac
+
+AM_CONDITIONAL([DARWIN], [test x$os_darwin = xyes]) 
+AM_CONDITIONAL([LINUX], [test x$os_linux = xyes]) 
 
 AC_CONFIG_FILES([ 
                   Makefile

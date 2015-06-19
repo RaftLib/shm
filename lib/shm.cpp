@@ -12,7 +12,6 @@
 #define _GNU_SOURCE 1
 #endif
 #include <sched.h>
-#include <sys/sysinfo.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <cstring>
@@ -34,6 +33,7 @@
 
 #if __linux
 /** might need to install numactl-dev **/
+#include <sys/sysinfo.h>
 #include <malloc.h>
 #include <numaif.h>
 #include <numa.h>
@@ -82,14 +82,12 @@ shm::genkey( char * const buffer,
              const std::size_t length )
 {
    assert( buffer != nullptr );
+   assert( length >= 8 );
    if( length == 0 )
    {
       throw invalid_key_exception( "Key length must be longer than zero!" );   
    }
    using key_t = std::uint32_t;
-#define PRIKEY PRIu32
-   key_t key( 1 ); 
-#ifndef DEBUG
    FILE *fp = std::fopen("/dev/urandom","r");
    if(fp == NULL)
    {
@@ -97,10 +95,18 @@ shm::genkey( char * const buffer,
       std::perror( err );
       exit( EXIT_FAILURE );
    }
-   if( std::fread( &key, sizeof( key_t ), 1, fp) != 1 )
+   /** figure out how many ints we'll need **/
+   const auto nints( 
+      static_cast< std::size_t >( 
+         static_cast< float >( length ) / 
+         static_cast< float >( sizeof( std::uint64_t ) ) ) * 2 ); 
+   auto *intptr( new std::uint64_t[ nints ]  );
+   if( std::fread( intptr, sizeof( std::uint64_t ), nints, fp) != nints )
    {
-      const char *err = "Error, incorrect number of integers retured!!\n";
+      /** BAIL OUT **/
+      const char *err = "Error, incorrect number of ints retured!!\n";
       std::fclose(fp);
+      delete[]( intptr );
       std::perror(err);
       exit( EXIT_FAILURE );
    }
@@ -108,26 +114,33 @@ shm::genkey( char * const buffer,
    {
       std::fclose( fp );
    }
-#endif
-   const auto buffer_size( 1000 );
-   char gen_buffer[ buffer_size ];
-   std::memset( gen_buffer, 
-                '\0', 
-                buffer_size );
-
-   std::snprintf( gen_buffer, 
-                  buffer_size, 
-                  "%" PRIKEY "", 
-                  key );
-   const auto cp_length( 
-      std::min( 
-         std::strlen( gen_buffer ), length ) );
-   std::memset(  buffer, 
-                '\0', 
-                length );
-   std::strncpy( buffer, 
-                 gen_buffer,
-                 cp_length - 1 /* null term */ );
+   std::size_t bytes_left( length );
+   std::uint64_t *intptr_64( intptr );
+   char *buff_ptr( buffer );
+   while( bytes_left > 8 )
+   {
+      std::snprintf( buff_ptr, 8, "%" PRIu64 "", (*intptr_64) );
+      ++intptr_64;
+      bytes_left -= 7;
+      buff_ptr += 7;
+   }
+   auto *intptr_32( reinterpret_cast< std::uint32_t* >( intptr_64 ) );
+   while( bytes_left > 4 )
+   {
+      std::snprintf( buff_ptr, 4, "%" PRIu32"", (*intptr_32) ); 
+      bytes_left -= 3;
+      buff_ptr += 3;
+      ++intptr_32;
+   }
+   auto *intptr_16( reinterpret_cast< std::uint16_t* >( intptr_32 ) );
+   while( bytes_left >= 2 )
+   {
+      std::snprintf( buff_ptr, 2, "%" PRIu16"", (*intptr_16) ); 
+      bytes_left -= 1;
+      buff_ptr += 1;
+      ++intptr_16;
+   }
+   delete[]( intptr );
    return;
 }
 
@@ -165,21 +178,12 @@ shm::init( const char * const key,
    if( fd == failure )
    {
       std::stringstream ss;
-      ss << "Failed to open shm with file descriptor \"" << key << "\", error code returned: ";
+      ss << "Failed to open shm with file descriptor \"" << 
+         key << "\", error code returned: ";
       ss << strerror( errno );
       throw bad_shm_alloc( ss.str() ); 
    }
    /* else begin truncate */
-   errno = success;
-   if( ftruncate( fd, nbytes ) != success )
-   {
-      std::stringstream ss;
-      ss << "Failed to truncate shm for file descriptor (" << fd << ") ";
-      ss << "with number of bytes (" << nbytes << ").  Error code returned: ";
-      ss << strerror( errno );
-      shm_unlink( key );
-      throw bad_shm_alloc( ss.str() );
-   }
    /* else begin mmap */
    /** get allocations size including extra dummy page **/
    const auto page_size( sysconf( _SC_PAGESIZE ) );
@@ -189,6 +193,16 @@ shm::init( const char * const key,
             static_cast< float >( nbytes) / 
            static_cast< float >( page_size ) ) + 1 ) * page_size 
    );
+   errno = success;
+   if( ftruncate( fd, alloc_bytes ) != success )
+   {
+      std::stringstream ss;
+      ss << "Failed to truncate shm for file descriptor (" << fd << ") ";
+      ss << "with number of bytes (" << nbytes << ").  Error code returned: ";
+      ss << strerror( errno );
+      shm_unlink( key );
+      throw bad_shm_alloc( ss.str() );
+   }
    /** 
     * NOTE: actual allocation size should be alloc_bytes,
     * user has no idea so we'll re-calc this at the  end
@@ -296,31 +310,15 @@ shm::open( const char *key )
 
 bool
 shm::close( const char *key,
-            void *ptr,
+            void **ptr,
             const std::size_t nbytes,
             const bool zero,
             const bool unlink )
 {
-   assert( key != nullptr );
-   std::stringstream ss_a;
-#if __linux
-   ss_a << "/dev/shm/" << key;
-#elif defined __APPLE__
-   ss_a << key;
-#else
-#warning "Undefined architecture, results may vary!"
-   ss_a << key;
-#endif
-   if( access( ss_a.str().c_str(), F_OK ) != 0 )
-   {
-      std::stringstream ss;
-      ss << "Can't find key: \"" << ss_a.str() << "\", check again and manually clean up.";
-      throw invalid_key_exception( ss.str() ); 
-   }
    const std::int32_t success( 0 );
-   if( zero )
+   if( zero and ( *ptr != nullptr ) )
    {
-      std::memset( ptr, 0x0, nbytes );
+      std::memset( *ptr, 0x0, nbytes );
    }
    /** get allocations size including extra dummy page **/
    const auto page_size( sysconf( _SC_PAGESIZE ) );
@@ -331,21 +329,30 @@ shm::close( const char *key,
            static_cast< float >( page_size ) ) + 1 ) * page_size 
    );
    errno = success;
-   if( munmap( ptr, alloc_bytes ) != success )
+   if( ( *ptr not_eq nullptr ) and ( munmap( *ptr, alloc_bytes ) not_eq success ) )
    {
 #if DEBUG   
       perror( "Failed to unmap shared memory, attempting to close!!" );
 #endif
    }
+   *ptr = nullptr;
    if( unlink )
    {
       errno = success;
-      return( shm_unlink( key ) == success );
+      if( shm_unlink( key ) != 0 )
+      {
+         switch( errno )
+         {
+            case( ENOENT ):
+            {
+               throw invalid_key_exception( "File descriptor to unlink does not exist!" );
+            }
+            default:
+               throw invalid_key_exception( "Undefined error, check error codes" );
+         }
+      }
    }
-   else
-   {
-      return( true );
-   }
+   return( true );
 }
 
 #ifdef __linux

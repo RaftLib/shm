@@ -20,12 +20,17 @@
 #include <cstdint>
 #include <iostream>
 #include <shm>
+#include <cstring>
+#include <cassert>
 
 int
 main( int argc, char **argv )
 {
-   char key_buff[ 256 ];
-   shm::genkey( key_buff, 256 );
+   static const auto buff_size( 16 );
+   char key_buff[ buff_size ];
+   shm::genkey( key_buff, buff_size );
+   const auto key_length( std::strlen( key_buff ) );
+   assert( key_length == buff_size - 1 );
    std::int32_t *ptr( nullptr );
    try
    {
@@ -42,7 +47,7 @@ main( int argc, char **argv )
    }
    /** if we get to this point then we assume that the mem is writable **/
    shm::close( key_buff, 
-               reinterpret_cast<void*>(ptr), 
+               reinterpret_cast<void**>( &ptr), 
                0x1000,
                true,
                true );

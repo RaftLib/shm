@@ -39,7 +39,7 @@ main( int argc, char **argv )
    }
    /** if we get to this point then we assume that the mem is writable **/
    shm::close( key_buff, 
-               reinterpret_cast<void*>(ptr), 
+               reinterpret_cast<void**>(&ptr), 
                nbytes,
                true,
                true );

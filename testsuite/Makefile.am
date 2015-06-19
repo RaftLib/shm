@@ -2,11 +2,15 @@ AUTOMAKE_OPTIONS = foreign
 AM_CXXFLAGS=-O0 -g -std=c++11
 AM_CFLAGS=-O0 -g -std=c99
 AM_CPPFLAGS=-I$(top_srcdir)/include
-if BUILD_OS_IS_DARWIN
+
+if DARWIN
 LINUXADD =
+AM_LDFLAGS = 
 else
+if LINUX
 LINUXADD = -lrt -lnuma
 AM_LDFLAGS = -static -Wl,--no-whole-archive
+endif
 endif
 
 LDADD= -L$(top_srcdir)/lib -lshm $(LINUXADD)
@@ -37,4 +41,4 @@ zerokeylength_SOURCES = zerokeylength.cpp
 
 check_PROGRAMS += genkeyoverflow
 genkeyoverflow_SOURCES = genkeyoverflow.cpp
-CLEANFILES = *.log *.sum
+CLEANFILES = *.log *.sum lldb

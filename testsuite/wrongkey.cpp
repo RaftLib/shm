@@ -26,8 +26,9 @@
 int
 main( int argc, char **argv )
 {
-   char key_buff[ 256 ];
-   shm::genkey( key_buff, 256 );
+   static const auto key_length( 30 );
+   char key_buff[ key_length ];
+   shm::genkey( key_buff, key_length );
    std::int32_t *ptr( nullptr );
    const auto nbytes( 0x1000 );
    try
@@ -43,7 +44,7 @@ main( int argc, char **argv )
    try
    {
       shm::close( "foobar", 
-                  reinterpret_cast<void*>(ptr), 
+                  reinterpret_cast<void**>( &ptr ), 
                   nbytes,
                   true,
                   true );
@@ -52,7 +53,7 @@ main( int argc, char **argv )
    {
       /** real key so we don't manually cleanup **/
       shm::close( key_buff, 
-                  reinterpret_cast<void*>(ptr), 
+                  reinterpret_cast<void**>( &ptr), 
                   nbytes,
                   true,
                   true );

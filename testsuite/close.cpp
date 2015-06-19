@@ -28,8 +28,9 @@
 int
 main( int argc, char **argv )
 {
-   char key_buff[ 256 ];
-   shm::genkey( key_buff, 256 );
+   static const auto buff_size( 30 );
+   char key_buff[ buff_size ];
+   shm::genkey( key_buff, buff_size );
    std::int32_t *ptr( nullptr );
    try
    {
@@ -46,18 +47,10 @@ main( int argc, char **argv )
    }
    /** if we get to this point then we assume that the mem is writable **/
    shm::close( key_buff, 
-               reinterpret_cast<void*>(ptr), 
+               reinterpret_cast<void**>(&ptr), 
                0x1000,
                true, 
                true
                );
-   /** should get here and be done, check shm file  **/
-   std::stringstream ss;
-   ss << "/dev/shm/" << key_buff;
-   if( access( ss.str().c_str(), F_OK ) != -1 )
-   {
-      std::cerr << "File exists!!\n";
-      return( EXIT_FAILURE );
-   }
    return( EXIT_SUCCESS );
 }
