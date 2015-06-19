@@ -4,12 +4,12 @@
 AC_PREREQ([2.69])
 AC_INIT([libshm], [1], [jonathan.c.beard@gmail.com])
 AC_CONFIG_SRCDIR([lib/shm.cpp])
+AC_CONFIG_MACRO_DIR([m4])
 #AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 # Checks for programs.
 LT_INIT
-AC_PROG_RANLIB
 AC_PROG_CXX
 
 # Checks for libraries.
