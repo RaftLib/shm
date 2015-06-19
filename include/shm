@@ -144,7 +144,7 @@ public:
     * returned, otherwise they are left alone and true 
     * is returned.
     * @param   thread_id - pid_t, id of calling thread
-    * @param   pages - void**, start pointer of pages, must
+    * @param   pages - void*, start pointer of pages, must
     * be page aligned.
     * @param   n_bytes - std::size_t, length of the allocation
     * in pages, must be a multiple of pages, otherwise an 
