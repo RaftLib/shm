@@ -140,7 +140,7 @@ shm::genkey( char * const buffer,
    auto *intptr_32( reinterpret_cast< std::uint32_t* >( intptr_64 ) );
    while( bytes_left > 4 )
    {
-      std::snprintf( buff_ptr, 4, "%" PRIu32"", (*intptr_32) ); 
+      std::snprintf( buff_ptr, 4, "%" PRIu32 "", (*intptr_32) ); 
       bytes_left -= 3;
       buff_ptr += 3;
       ++intptr_32;
@@ -148,7 +148,7 @@ shm::genkey( char * const buffer,
    auto *intptr_16( reinterpret_cast< std::uint16_t* >( intptr_32 ) );
    while( bytes_left >= 2 )
    {
-      std::snprintf( buff_ptr, 2, "%" PRIu16"", (*intptr_16) ); 
+      std::snprintf( buff_ptr, 2, "%" PRIu16 "", (*intptr_16) ); 
       bytes_left -= 1;
       buff_ptr += 1;
       ++intptr_16;
@@ -177,7 +177,7 @@ shm::init( const char * const key,
    {
       std::stringstream ss;
       ss << "File exists with name \"" << key << "\", error code returned: ";
-      ss << strerror( errno );
+      ss << std::strerror( errno );
       throw bad_shm_alloc( ss.str() );
    }
    /* set read/write set create if not exists */
@@ -193,7 +193,7 @@ shm::init( const char * const key,
       std::stringstream ss;
       ss << "Failed to open shm with file descriptor \"" << 
          key << "\", error code returned: ";
-      ss << strerror( errno );
+      ss << std::strerror( errno );
       throw bad_shm_alloc( ss.str() ); 
    }
    /* else begin truncate */
@@ -232,7 +232,7 @@ shm::init( const char * const key,
    if( out == MAP_FAILED )
    {
       std::stringstream ss;
-      ss << "Failed to mmap shm region with the following error: " << strerror( errno ) << ",\n";
+      ss << "Failed to mmap shm region with the following error: " << std::strerror( errno ) << ",\n";
       ss << "unlinking.";
       shm_unlink( key );
       throw bad_shm_alloc( ss.str() );
@@ -286,7 +286,7 @@ shm::open( const char *key )
    {
       std::stringstream ss;
       ss << "Failed to open shm with key \"" << key << "\", with the following error code: ";
-      ss << strerror( errno ); 
+      ss << std::strerror( errno ); 
       throw bad_shm_alloc( ss.str() );
    }
    /* stat the file to get the size */
@@ -294,7 +294,7 @@ shm::open( const char *key )
    if( fstat( fd, &st ) != success )
    {
       std::stringstream ss;
-      ss << "Failed to stat shm region with the following error: " << strerror( errno ) << ",\n";
+      ss << "Failed to stat shm region with the following error: " << std::strerror( errno ) << ",\n";
       ss << "unlinking.";
       shm_unlink( key );
       throw bad_shm_alloc( ss.str() );
@@ -310,7 +310,7 @@ shm::open( const char *key )
    if( out == MAP_FAILED )
    {
       std::stringstream ss;
-      ss << "Failed to mmap shm region with the following error: " << strerror( errno ) << ",\n";
+      ss << "Failed to mmap shm region with the following error: " << std::strerror( errno ) << ",\n";
       ss << "unlinking.";
       shm_unlink( key );
       throw bad_shm_alloc( ss.str() );
@@ -412,7 +412,7 @@ shm::move_to_tid_numa( const pid_t thread_id,
     * same NUMA node, if they are then we'll check to see if the
     * alloc is on the same node, otherwise we'll move the pages to that
     * node.  The interesting case comes when there are multiple
-    * CPUs and multiple possible NUMA nodes to choose from.  The simple
+    * CPUs per set and multiple possible NUMA nodes to choose from.  The simple
     * answer, the one I'm taking a the moment is that we can't 
     * really decide in this function.  I think in the future it'd
     * be good to have a profiler decide the shortest latency and
@@ -468,8 +468,8 @@ shm::move_to_tid_numa( const pid_t thread_id,
       std::ceil( 
       static_cast< float >( nbytes ) / static_cast< float >( page_size ) ) ) );
    using int_t = std::int32_t;
-   int_t *mem_node     = new int_t[ num_pages ];
-   int_t *mem_status   = new int_t[ num_pages ];
+   int_t *mem_node  ( new int_t[ num_pages ] );
+   int_t *mem_status( new int_t[ num_pages ] );
    void **page_ptr = (void**)malloc( sizeof( void* ) * num_pages );
    char *temp_ptr( reinterpret_cast< char* >( ptr ) );
    for( auto node_index( 0 ), 
