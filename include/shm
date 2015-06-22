@@ -124,6 +124,13 @@ public:
                          const bool   zero = false ,
                          const bool   unlink = false );
 
+   
+   /**
+    * einit - simple wrapper around shm::init, basically
+    * just casts your void* for you.
+    * @param - key, std::string&& with key
+    * @param - nitems, number of items to init of type T
+    */
    template < class T > 
       static T* einit( const std::string &&key,
                        const std::size_t nitems )
@@ -134,6 +141,17 @@ public:
                     true,
                     nullptr ) ) );
    }
+   /**
+    * eopen - simple wrapper around shm::open, casts the pointer
+    * for you and returns a type T.
+    * @param - key, std::string&&
+    */
+   template < class T >
+      static T* eopen( const std::string &&key )
+   {
+      return( reinterpret_cast< T* >( shm::open( key.c_str() ) ) );
+   }
+
 #if __linux
    /**
     * move_to_tid_numa - checks the pages at 'pages' pointer,
