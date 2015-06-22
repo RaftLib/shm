@@ -15,12 +15,18 @@ endif
 
 LDADD= -L$(top_srcdir)/lib -lshm $(LINUXADD)
 TESTS = alloc close nokey outofrange zerobytes wrongkey zerokeylength genkeyoverflow\
-        pagemigrate
+        pagemigrate cppstylealloc cppstyleopen
 XFAIL_TESTS = nokey outofrange zerobytes zerokeylength genkeyoverflow
 
 check_PROGRAMS = 
 check_PROGRAMS += alloc
 alloc_SOURCES = alloc.cpp
+
+check_PROGRAMS += cppstylealloc
+cppstylealloc_SOURCES = cppstylealloc.cpp
+
+check_PROGRAMS += cppstyleopen
+cppstyleopen_SOURCES = cppstyleopen.cpp
 
 check_PROGRAMS += close
 close_SOURCES = close.cpp

@@ -80,10 +80,12 @@ host_triplet = @host@
 TESTS = alloc$(EXEEXT) close$(EXEEXT) nokey$(EXEEXT) \
 	outofrange$(EXEEXT) zerobytes$(EXEEXT) wrongkey$(EXEEXT) \
 	zerokeylength$(EXEEXT) genkeyoverflow$(EXEEXT) \
-	pagemigrate$(EXEEXT)
+	pagemigrate$(EXEEXT) cppstylealloc$(EXEEXT) \
+	cppstyleopen$(EXEEXT)
 XFAIL_TESTS = nokey$(EXEEXT) outofrange$(EXEEXT) zerobytes$(EXEEXT) \
 	zerokeylength$(EXEEXT) genkeyoverflow$(EXEEXT)
-check_PROGRAMS = alloc$(EXEEXT) close$(EXEEXT) nokey$(EXEEXT) \
+check_PROGRAMS = alloc$(EXEEXT) cppstylealloc$(EXEEXT) \
+	cppstyleopen$(EXEEXT) close$(EXEEXT) nokey$(EXEEXT) \
 	outofrange$(EXEEXT) zerobytes$(EXEEXT) wrongkey$(EXEEXT) \
 	zerokeylength$(EXEEXT) genkeyoverflow$(EXEEXT) \
 	pagemigrate$(EXEEXT)
@@ -113,6 +115,14 @@ am_close_OBJECTS = close.$(OBJEXT)
 close_OBJECTS = $(am_close_OBJECTS)
 close_LDADD = $(LDADD)
 close_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_cppstylealloc_OBJECTS = cppstylealloc.$(OBJEXT)
+cppstylealloc_OBJECTS = $(am_cppstylealloc_OBJECTS)
+cppstylealloc_LDADD = $(LDADD)
+cppstylealloc_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_cppstyleopen_OBJECTS = cppstyleopen.$(OBJEXT)
+cppstyleopen_OBJECTS = $(am_cppstyleopen_OBJECTS)
+cppstyleopen_LDADD = $(LDADD)
+cppstyleopen_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_genkeyoverflow_OBJECTS = genkeyoverflow.$(OBJEXT)
 genkeyoverflow_OBJECTS = $(am_genkeyoverflow_OBJECTS)
 genkeyoverflow_LDADD = $(LDADD)
@@ -175,11 +185,13 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(alloc_SOURCES) $(close_SOURCES) $(genkeyoverflow_SOURCES) \
+SOURCES = $(alloc_SOURCES) $(close_SOURCES) $(cppstylealloc_SOURCES) \
+	$(cppstyleopen_SOURCES) $(genkeyoverflow_SOURCES) \
 	$(nokey_SOURCES) $(outofrange_SOURCES) $(pagemigrate_SOURCES) \
 	$(wrongkey_SOURCES) $(zerobytes_SOURCES) \
 	$(zerokeylength_SOURCES)
 DIST_SOURCES = $(alloc_SOURCES) $(close_SOURCES) \
+	$(cppstylealloc_SOURCES) $(cppstyleopen_SOURCES) \
 	$(genkeyoverflow_SOURCES) $(nokey_SOURCES) \
 	$(outofrange_SOURCES) $(pagemigrate_SOURCES) \
 	$(wrongkey_SOURCES) $(zerobytes_SOURCES) \
@@ -542,6 +554,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/include
 @DARWIN_TRUE@AM_LDFLAGS = 
 LDADD = -L$(top_srcdir)/lib -lshm $(LINUXADD)
 alloc_SOURCES = alloc.cpp
+cppstylealloc_SOURCES = cppstylealloc.cpp
+cppstyleopen_SOURCES = cppstyleopen.cpp
 close_SOURCES = close.cpp
 nokey_SOURCES = nokey.cpp
 outofrange_SOURCES = outofrange.cpp
@@ -603,6 +617,14 @@ close$(EXEEXT): $(close_OBJECTS) $(close_DEPENDENCIES) $(EXTRA_close_DEPENDENCIE
 	@rm -f close$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(close_OBJECTS) $(close_LDADD) $(LIBS)
 
+cppstylealloc$(EXEEXT): $(cppstylealloc_OBJECTS) $(cppstylealloc_DEPENDENCIES) $(EXTRA_cppstylealloc_DEPENDENCIES) 
+	@rm -f cppstylealloc$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(cppstylealloc_OBJECTS) $(cppstylealloc_LDADD) $(LIBS)
+
+cppstyleopen$(EXEEXT): $(cppstyleopen_OBJECTS) $(cppstyleopen_DEPENDENCIES) $(EXTRA_cppstyleopen_DEPENDENCIES) 
+	@rm -f cppstyleopen$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(cppstyleopen_OBJECTS) $(cppstyleopen_LDADD) $(LIBS)
+
 genkeyoverflow$(EXEEXT): $(genkeyoverflow_OBJECTS) $(genkeyoverflow_DEPENDENCIES) $(EXTRA_genkeyoverflow_DEPENDENCIES) 
 	@rm -f genkeyoverflow$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(genkeyoverflow_OBJECTS) $(genkeyoverflow_LDADD) $(LIBS)
@@ -639,6 +661,8 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alloc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/close.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cppstylealloc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cppstyleopen.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/genkeyoverflow.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nokey.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/outofrange.Po@am__quote@
@@ -926,6 +950,20 @@ genkeyoverflow.log: genkeyoverflow$(EXEEXT)
 pagemigrate.log: pagemigrate$(EXEEXT)
 	@p='pagemigrate$(EXEEXT)'; \
 	b='pagemigrate'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+cppstylealloc.log: cppstylealloc$(EXEEXT)
+	@p='cppstylealloc$(EXEEXT)'; \
+	b='cppstylealloc'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+cppstyleopen.log: cppstyleopen$(EXEEXT)
+	@p='cppstyleopen$(EXEEXT)'; \
+	b='cppstyleopen'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
