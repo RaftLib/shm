@@ -328,27 +328,30 @@ shm::close( const char *key,
             const bool zero,
             const bool unlink )
 {
-   const std::int32_t success( 0 );
-   if( zero and ( *ptr != nullptr ) )
+   const auto success( 0 );
+   if( ptr != nullptr )
    {
-      std::memset( *ptr, 0x0, nbytes );
-   }
-   /** get allocations size including extra dummy page **/
-   const auto page_size( sysconf( _SC_PAGESIZE ) );
-   const auto alloc_bytes( 
-      static_cast< std::size_t >( 
-         std::ceil(  
-            static_cast< float >( nbytes ) / 
-           static_cast< float >( page_size ) ) + 1 ) * page_size 
-   );
-   errno = success;
-   if( ( *ptr not_eq nullptr ) and ( munmap( *ptr, alloc_bytes ) not_eq success ) )
-   {
+      if( zero and ( *ptr != nullptr ) )
+      {
+         std::memset( *ptr, 0x0, nbytes );
+      }
+      /** get allocations size including extra dummy page **/
+      const auto page_size( sysconf( _SC_PAGESIZE ) );
+      const auto alloc_bytes( 
+         static_cast< std::size_t >( 
+            std::ceil(  
+               static_cast< float >( nbytes ) / 
+              static_cast< float >( page_size ) ) + 1 ) * page_size 
+      );
+      errno = success;
+      if( ( *ptr not_eq nullptr ) and ( munmap( *ptr, alloc_bytes ) not_eq success ) )
+      {
 #if DEBUG   
-      perror( "Failed to unmap shared memory, attempting to close!!" );
+         perror( "Failed to unmap shared memory, attempting to close!!" );
 #endif
+      }
+      *ptr = nullptr;
    }
-   *ptr = nullptr;
    if( unlink )
    {
       errno = success;
