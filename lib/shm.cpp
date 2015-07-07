@@ -371,12 +371,12 @@ shm::close( const char *key,
    return( true );
 }
 
-#if __linux
 bool
 shm::move_to_tid_numa( const pid_t thread_id,
                        void *ptr,
                        const std::size_t nbytes )
 {
+#if __linux
    /** check alignment of pages first **/
    const auto page_size( sysconf( _SC_PAGESIZE ) );
    
@@ -501,5 +501,7 @@ shm::move_to_tid_numa( const pid_t thread_id,
    delete[]( mem_status );
    free( page_ptr );
    return( moved );
-}
+#else /** no NUMA avail **/
+   return( false );
 #endif
+}

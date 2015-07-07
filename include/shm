@@ -152,7 +152,6 @@ public:
       return( reinterpret_cast< T* >( shm::open( key.c_str() ) ) );
    }
 
-#if __linux
    /**
     * move_to_tid_numa - checks the pages at 'pages' pointer,
     * and makes sure that they are on the NUMA node of the 
@@ -171,7 +170,6 @@ public:
    static bool move_to_tid_numa( const pid_t thread_id,
                                  void *ptr,
                                  const std::size_t n_bytes );
-#endif
                            
 };
 
