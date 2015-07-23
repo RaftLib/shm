@@ -27,7 +27,6 @@ AC_TYPE_SIZE_T
 AC_TYPE_UINT32_T
 
 # Checks for library functions.
-AC_FUNC_MALLOC
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([ftruncate memset munmap strerror shm_unlink shm_open])
 
