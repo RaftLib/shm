@@ -78,6 +78,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@NUMA_TRUE@am__append_1 = -DNUMA=1
+@NUMA_FALSE@am__append_2 = -DNUMA=0
 subdir = lib
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
@@ -316,7 +318,7 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
 AM_CXXFLAGS = -std=c++11 -O0 -g
 AM_CFLAGS = -std=c99 -O0 -g
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include $(am__append_1) $(am__append_2)
 pkglib_LIBRARIES = libshm.a
 libshm_a_SOURCES = shm.cpp 
 all: all-am

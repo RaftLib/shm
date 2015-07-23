@@ -2,5 +2,12 @@ AUTOMAKE_OPTIONS=foreign
 AM_CXXFLAGS=-std=c++11 -O0 -g
 AM_CFLAGS=-std=c99 -O0 -g
 AM_CPPFLAGS = -I$(top_srcdir)/include
+
+if NUMA
+AM_CPPFLAGS += -DNUMA=1
+else
+AM_CPPFLAGS += -DNUMA=0
+endif
+
 pkglib_LIBRARIES = libshm.a
 libshm_a_SOURCES=shm.cpp 

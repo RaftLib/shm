@@ -3,20 +3,30 @@ AM_CXXFLAGS=-O0 -g -std=c++11
 AM_CFLAGS=-O0 -g -std=c99
 AM_CPPFLAGS=-I$(top_srcdir)/include
 
-if DARWIN
-LINUXADD =
-AM_LDFLAGS = 
-else
+LINUXADD=
+AM_LDFLAGS=
+
 if LINUX
-LINUXADD = -lrt -lnuma -lpthread
-AM_LDFLAGS = -static -Wl,--no-whole-archive
+LINUXADD    += -lrt -lpthread
+AM_LDFLAGS  += -static -Wl,--no-whole-archive
 endif
+
+if NUMA
+LINUXADD += -lnuma
+AM_CPPFLAGS +=-DNUMA=1
+else
+AM_CPPFLAGS +=-DNUMA=0
 endif
 
 LDADD= -L$(top_srcdir)/lib -lshm $(LINUXADD)
 TESTS = alloc close nokey outofrange zerobytes wrongkey zerokeylength genkeyoverflow\
-        pagemigrate cppstylealloc cppstyleopen
+        cppstylealloc cppstyleopen
+if NUMA
+TESTS += pagemigrate
+endif
+
 XFAIL_TESTS = nokey outofrange zerobytes zerokeylength genkeyoverflow
+
 
 check_PROGRAMS = 
 check_PROGRAMS += alloc
@@ -49,7 +59,9 @@ zerokeylength_SOURCES = zerokeylength.cpp
 check_PROGRAMS += genkeyoverflow
 genkeyoverflow_SOURCES = genkeyoverflow.cpp
 
+if NUMA
 check_PROGRAMS += pagemigrate
 pagemigrate_SOURCES = pagemigrate.cpp
+endif
 
 CLEANFILES = *.log *.sum lldb

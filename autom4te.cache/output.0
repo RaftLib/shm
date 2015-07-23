@@ -636,11 +636,13 @@ ac_header_list=
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+LIB@&t@OBJS
+NUMA_FALSE
+NUMA_TRUE
 LINUX_FALSE
 LINUX_TRUE
 DARWIN_FALSE
 DARWIN_TRUE
-LIB@&t@OBJS
 CXXCPP
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
@@ -764,6 +766,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_silent_rules
+enable_arm
 enable_shared
 enable_static
 with_pic
@@ -1406,6 +1409,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
+--enable-arm      turn off features we dont want
   --enable-shared@<:@=PKGS@:>@  build shared libraries @<:@default=yes@:>@
   --enable-static@<:@=PKGS@:>@  build static libraries @<:@default=yes@:>@
   --enable-fast-install@<:@=PKGS@:>@ 
@@ -3139,6 +3143,17 @@ END
     as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
   fi
 fi
+@%:@ Check whether --enable-arm was given.
+if test "${enable_arm+set}" = set; then :
+  enableval=$enable_arm; case "${enableval}" in
+   yes) arm=true  ;;
+   no)  arm=false ;;
+   *) as_fn_error $? "bad value ${enableval} for --enable-debug" "$LINENO" 5 ;;
+ esac
+else
+  arm=false
+fi
+
 
 # Checks for programs.
 case `pwd` in
@@ -15529,73 +15544,6 @@ _ACEOF
 
 
 # Checks for library functions.
-for ac_header in stdlib.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "stdlib.h" "ac_cv_header_stdlib_h" "$ac_includes_default"
-if test "x$ac_cv_header_stdlib_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-@%:@define HAVE_STDLIB_H 1
-_ACEOF
- 
-fi
-
-done
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GNU libc compatible malloc" >&5
-$as_echo_n "checking for GNU libc compatible malloc... " >&6; }
-if ${ac_cv_func_malloc_0_nonnull+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "$cross_compiling" = yes; then :
-  ac_cv_func_malloc_0_nonnull=no
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#if defined STDC_HEADERS || defined HAVE_STDLIB_H
-# include <stdlib.h>
-#else
-char *malloc ();
-#endif
-
-int
-main ()
-{
-return ! malloc (0);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  ac_cv_func_malloc_0_nonnull=yes
-else
-  ac_cv_func_malloc_0_nonnull=no
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_malloc_0_nonnull" >&5
-$as_echo "$ac_cv_func_malloc_0_nonnull" >&6; }
-if test $ac_cv_func_malloc_0_nonnull = yes; then :
-  
-$as_echo "@%:@define HAVE_MALLOC 1" >>confdefs.h
-
-else
-  $as_echo "@%:@define HAVE_MALLOC 0" >>confdefs.h
-
-   case " $LIB@&t@OBJS " in
-  *" malloc.$ac_objext "* ) ;;
-  *) LIB@&t@OBJS="$LIB@&t@OBJS malloc.$ac_objext"
- ;;
-esac
-
-   
-$as_echo "@%:@define malloc rpl_malloc" >>confdefs.h
-
-fi
-
-
 
 
   
@@ -15810,6 +15758,7 @@ fi
 done
 
 
+
 case $host_os in 
    darwin*)
       os_bsd=no
@@ -15844,6 +15793,13 @@ else
   LINUX_FALSE=
 fi
  
+ if test x$arm = xfalse; then
+  NUMA_TRUE=
+  NUMA_FALSE='#'
+else
+  NUMA_TRUE='#'
+  NUMA_FALSE=
+fi
 
 ac_config_files="$ac_config_files Makefile lib/Makefile testsuite/Makefile"
 
@@ -16026,6 +15982,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LINUX_TRUE}" && test -z "${LINUX_FALSE}"; then
   as_fn_error $? "conditional \"LINUX\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${NUMA_TRUE}" && test -z "${NUMA_FALSE}"; then
+  as_fn_error $? "conditional \"NUMA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

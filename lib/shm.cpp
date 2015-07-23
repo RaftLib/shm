@@ -376,7 +376,7 @@ shm::move_to_tid_numa( const pid_t thread_id,
                        void *ptr,
                        const std::size_t nbytes )
 {
-#if __linux
+#if __linux && ( NUMA == 1 )
    /** check alignment of pages first **/
    const auto page_size( sysconf( _SC_PAGESIZE ) );
    

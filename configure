@@ -637,6 +637,8 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
+NUMA_FALSE
+NUMA_TRUE
 LINUX_FALSE
 LINUX_TRUE
 DARWIN_FALSE
@@ -764,6 +766,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_silent_rules
+enable_arm
 enable_shared
 enable_static
 with_pic
@@ -1406,6 +1409,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
+--enable-arm      turn off features we dont want
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
   --enable-fast-install[=PKGS]
@@ -3139,6 +3143,17 @@ END
     as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
   fi
 fi
+# Check whether --enable-arm was given.
+if test "${enable_arm+set}" = set; then :
+  enableval=$enable_arm; case "${enableval}" in
+   yes) arm=true  ;;
+   no)  arm=false ;;
+   *) as_fn_error $? "bad value ${enableval} for --enable-debug" "$LINENO" 5 ;;
+ esac
+else
+  arm=false
+fi
+
 
 # Checks for programs.
 case `pwd` in
@@ -15743,6 +15758,7 @@ fi
 done
 
 
+
 case $host_os in
    darwin*)
       os_bsd=no
@@ -15777,6 +15793,13 @@ else
   LINUX_FALSE=
 fi
 
+ if test x$arm = xfalse; then
+  NUMA_TRUE=
+  NUMA_FALSE='#'
+else
+  NUMA_TRUE='#'
+  NUMA_FALSE=
+fi
 
 ac_config_files="$ac_config_files Makefile lib/Makefile testsuite/Makefile"
 
@@ -15959,6 +15982,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LINUX_TRUE}" && test -z "${LINUX_FALSE}"; then
   as_fn_error $? "conditional \"LINUX\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${NUMA_TRUE}" && test -z "${NUMA_FALSE}"; then
+  as_fn_error $? "conditional \"NUMA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

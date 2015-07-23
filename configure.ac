@@ -7,6 +7,12 @@ AC_CONFIG_SRCDIR([lib/shm.cpp])
 AC_CONFIG_MACRO_DIR([m4])
 #AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AC_ARG_ENABLE([arm],[--enable-arm      turn off features we dont want],
+[case "${enableval}" in
+   yes) arm=true  ;;
+   no)  arm=false ;;
+   *) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+ esac],[arm=false])
 
 # Checks for programs.
 LT_INIT
@@ -30,6 +36,7 @@ AC_TYPE_UINT32_T
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([ftruncate memset munmap strerror shm_unlink shm_open])
 
+
 case $host_os in 
    darwin*)
       os_bsd=no
@@ -50,7 +57,7 @@ esac
 
 AM_CONDITIONAL([DARWIN], [test x$os_darwin = xyes]) 
 AM_CONDITIONAL([LINUX], [test x$os_linux = xyes]) 
-
+AM_CONDITIONAL([NUMA], [test x$arm = xfalse])
 AC_CONFIG_FILES([ 
                   Makefile
                   lib/Makefile

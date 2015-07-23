@@ -77,18 +77,23 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@LINUX_TRUE@am__append_1 = -lrt -lpthread
+@LINUX_TRUE@am__append_2 = -static -Wl,--no-whole-archive
+@NUMA_TRUE@am__append_3 = -lnuma
+@NUMA_TRUE@am__append_4 = -DNUMA=1
+@NUMA_FALSE@am__append_5 = -DNUMA=0
 TESTS = alloc$(EXEEXT) close$(EXEEXT) nokey$(EXEEXT) \
 	outofrange$(EXEEXT) zerobytes$(EXEEXT) wrongkey$(EXEEXT) \
 	zerokeylength$(EXEEXT) genkeyoverflow$(EXEEXT) \
-	pagemigrate$(EXEEXT) cppstylealloc$(EXEEXT) \
-	cppstyleopen$(EXEEXT)
+	cppstylealloc$(EXEEXT) cppstyleopen$(EXEEXT) $(am__EXEEXT_1)
+@NUMA_TRUE@am__append_6 = pagemigrate
 XFAIL_TESTS = nokey$(EXEEXT) outofrange$(EXEEXT) zerobytes$(EXEEXT) \
 	zerokeylength$(EXEEXT) genkeyoverflow$(EXEEXT)
 check_PROGRAMS = alloc$(EXEEXT) cppstylealloc$(EXEEXT) \
 	cppstyleopen$(EXEEXT) close$(EXEEXT) nokey$(EXEEXT) \
 	outofrange$(EXEEXT) zerobytes$(EXEEXT) wrongkey$(EXEEXT) \
-	zerokeylength$(EXEEXT) genkeyoverflow$(EXEEXT) \
-	pagemigrate$(EXEEXT)
+	zerokeylength$(EXEEXT) genkeyoverflow$(EXEEXT) $(am__EXEEXT_1)
+@NUMA_TRUE@am__append_7 = pagemigrate
 subdir = testsuite
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp $(top_srcdir)/test-driver
@@ -102,11 +107,13 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
+@NUMA_TRUE@am__EXEEXT_1 = pagemigrate$(EXEEXT)
 am_alloc_OBJECTS = alloc.$(OBJEXT)
 alloc_OBJECTS = $(am_alloc_OBJECTS)
 alloc_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
-alloc_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+alloc_DEPENDENCIES = $(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -114,43 +121,44 @@ am__v_lt_1 =
 am_close_OBJECTS = close.$(OBJEXT)
 close_OBJECTS = $(am_close_OBJECTS)
 close_LDADD = $(LDADD)
-close_DEPENDENCIES = $(am__DEPENDENCIES_1)
+close_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_cppstylealloc_OBJECTS = cppstylealloc.$(OBJEXT)
 cppstylealloc_OBJECTS = $(am_cppstylealloc_OBJECTS)
 cppstylealloc_LDADD = $(LDADD)
-cppstylealloc_DEPENDENCIES = $(am__DEPENDENCIES_1)
+cppstylealloc_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_cppstyleopen_OBJECTS = cppstyleopen.$(OBJEXT)
 cppstyleopen_OBJECTS = $(am_cppstyleopen_OBJECTS)
 cppstyleopen_LDADD = $(LDADD)
-cppstyleopen_DEPENDENCIES = $(am__DEPENDENCIES_1)
+cppstyleopen_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_genkeyoverflow_OBJECTS = genkeyoverflow.$(OBJEXT)
 genkeyoverflow_OBJECTS = $(am_genkeyoverflow_OBJECTS)
 genkeyoverflow_LDADD = $(LDADD)
-genkeyoverflow_DEPENDENCIES = $(am__DEPENDENCIES_1)
+genkeyoverflow_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_nokey_OBJECTS = nokey.$(OBJEXT)
 nokey_OBJECTS = $(am_nokey_OBJECTS)
 nokey_LDADD = $(LDADD)
-nokey_DEPENDENCIES = $(am__DEPENDENCIES_1)
+nokey_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_outofrange_OBJECTS = outofrange.$(OBJEXT)
 outofrange_OBJECTS = $(am_outofrange_OBJECTS)
 outofrange_LDADD = $(LDADD)
-outofrange_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_pagemigrate_OBJECTS = pagemigrate.$(OBJEXT)
+outofrange_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am__pagemigrate_SOURCES_DIST = pagemigrate.cpp
+@NUMA_TRUE@am_pagemigrate_OBJECTS = pagemigrate.$(OBJEXT)
 pagemigrate_OBJECTS = $(am_pagemigrate_OBJECTS)
 pagemigrate_LDADD = $(LDADD)
-pagemigrate_DEPENDENCIES = $(am__DEPENDENCIES_1)
+pagemigrate_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_wrongkey_OBJECTS = wrongkey.$(OBJEXT)
 wrongkey_OBJECTS = $(am_wrongkey_OBJECTS)
 wrongkey_LDADD = $(LDADD)
-wrongkey_DEPENDENCIES = $(am__DEPENDENCIES_1)
+wrongkey_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_zerobytes_OBJECTS = zerobytes.$(OBJEXT)
 zerobytes_OBJECTS = $(am_zerobytes_OBJECTS)
 zerobytes_LDADD = $(LDADD)
-zerobytes_DEPENDENCIES = $(am__DEPENDENCIES_1)
+zerobytes_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_zerokeylength_OBJECTS = zerokeylength.$(OBJEXT)
 zerokeylength_OBJECTS = $(am_zerokeylength_OBJECTS)
 zerokeylength_LDADD = $(LDADD)
-zerokeylength_DEPENDENCIES = $(am__DEPENDENCIES_1)
+zerokeylength_DEPENDENCIES = $(am__DEPENDENCIES_2)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -193,7 +201,7 @@ SOURCES = $(alloc_SOURCES) $(close_SOURCES) $(cppstylealloc_SOURCES) \
 DIST_SOURCES = $(alloc_SOURCES) $(close_SOURCES) \
 	$(cppstylealloc_SOURCES) $(cppstyleopen_SOURCES) \
 	$(genkeyoverflow_SOURCES) $(nokey_SOURCES) \
-	$(outofrange_SOURCES) $(pagemigrate_SOURCES) \
+	$(outofrange_SOURCES) $(am__pagemigrate_SOURCES_DIST) \
 	$(wrongkey_SOURCES) $(zerobytes_SOURCES) \
 	$(zerokeylength_SOURCES)
 am__can_run_installinfo = \
@@ -547,11 +555,9 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
 AM_CXXFLAGS = -O0 -g -std=c++11
 AM_CFLAGS = -O0 -g -std=c99
-AM_CPPFLAGS = -I$(top_srcdir)/include
-@DARWIN_FALSE@@LINUX_TRUE@LINUXADD = -lrt -lnuma -lpthread
-@DARWIN_TRUE@LINUXADD = 
-@DARWIN_FALSE@@LINUX_TRUE@AM_LDFLAGS = -static -Wl,--no-whole-archive
-@DARWIN_TRUE@AM_LDFLAGS = 
+AM_CPPFLAGS = -I$(top_srcdir)/include $(am__append_4) $(am__append_5)
+LINUXADD = $(am__append_1) $(am__append_3)
+AM_LDFLAGS = $(am__append_2)
 LDADD = -L$(top_srcdir)/lib -lshm $(LINUXADD)
 alloc_SOURCES = alloc.cpp
 cppstylealloc_SOURCES = cppstylealloc.cpp
@@ -563,7 +569,7 @@ zerobytes_SOURCES = zerobytes.cpp
 wrongkey_SOURCES = wrongkey.cpp
 zerokeylength_SOURCES = zerokeylength.cpp
 genkeyoverflow_SOURCES = genkeyoverflow.cpp
-pagemigrate_SOURCES = pagemigrate.cpp
+@NUMA_TRUE@pagemigrate_SOURCES = pagemigrate.cpp
 CLEANFILES = *.log *.sum lldb
 all: all-am
 
@@ -947,13 +953,6 @@ genkeyoverflow.log: genkeyoverflow$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-pagemigrate.log: pagemigrate$(EXEEXT)
-	@p='pagemigrate$(EXEEXT)'; \
-	b='pagemigrate'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
 cppstylealloc.log: cppstylealloc$(EXEEXT)
 	@p='cppstylealloc$(EXEEXT)'; \
 	b='cppstylealloc'; \
@@ -964,6 +963,13 @@ cppstylealloc.log: cppstylealloc$(EXEEXT)
 cppstyleopen.log: cppstyleopen$(EXEEXT)
 	@p='cppstyleopen$(EXEEXT)'; \
 	b='cppstyleopen'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+pagemigrate.log: pagemigrate$(EXEEXT)
+	@p='pagemigrate$(EXEEXT)'; \
+	b='pagemigrate'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
