@@ -15,6 +15,13 @@ AC_ARG_ENABLE([numa],[--enable-numa      turn off features we dont want],
    *) AC_MSG_ERROR([bad value ${enableval} for --enable-numa]) ;;
  esac],[numa=false])
 
+AC_ARG_ENABLE([static],[--enable-static      turn off features we dont want],
+[case "${enableval}" in
+   yes) static=true  ;;
+   no)  static=false ;;
+   *) AC_MSG_ERROR([bad value ${enableval} for --enable-static]) ;;
+ esac],[static=false])
+
 # Checks for programs.
 LT_INIT
 AC_PROG_CXX
@@ -59,6 +66,7 @@ esac
 AM_CONDITIONAL([DARWIN], [test x$os_darwin = xyes]) 
 AM_CONDITIONAL([LINUX], [test x$os_linux = xyes]) 
 AM_CONDITIONAL([NUMA], [test x$numa = xtrue])
+AM_CONDITIONAL([STATIC], [test x$static = xtrue])
 AC_CONFIG_FILES([ 
                   Makefile
                   lib/Makefile

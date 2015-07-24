@@ -78,6 +78,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@STATIC_TRUE@am__append_1 = -static -static-libgcc -static-libstdc++
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
@@ -348,6 +349,7 @@ AM_CXXFLAGS = -O0 -g -std=c++11
 AM_CFLAGS = -O0 -g -std=c99
 AM_CPPFLAGS = -I./$(top_srcdir)/include
 include_HEADERS = $(top_srcdir)/include/shm
+AM_LDFLAGS = $(am__append_1)
 all: all-recursive
 
 .SUFFIXES:

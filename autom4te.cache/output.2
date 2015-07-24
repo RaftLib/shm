@@ -637,6 +637,8 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIB@&t@OBJS
+STATIC_FALSE
+STATIC_TRUE
 NUMA_FALSE
 NUMA_TRUE
 LINUX_FALSE
@@ -767,8 +769,8 @@ ac_user_opts='
 enable_option_checking
 enable_silent_rules
 enable_numa
-enable_shared
 enable_static
+enable_shared
 with_pic
 enable_fast_install
 enable_dependency_tracking
@@ -1410,6 +1412,7 @@ Optional Features:
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
 --enable-numa      turn off features we dont want
+--enable-static      turn off features we dont want
   --enable-shared@<:@=PKGS@:>@  build shared libraries @<:@default=yes@:>@
   --enable-static@<:@=PKGS@:>@  build static libraries @<:@default=yes@:>@
   --enable-fast-install@<:@=PKGS@:>@ 
@@ -3153,6 +3156,18 @@ if test "${enable_numa+set}" = set; then :
  esac
 else
   numa=false
+fi
+
+
+@%:@ Check whether --enable-static was given.
+if test "${enable_static+set}" = set; then :
+  enableval=$enable_static; case "${enableval}" in
+   yes) static=true  ;;
+   no)  static=false ;;
+   *) as_fn_error $? "bad value ${enableval} for --enable-static" "$LINENO" 5 ;;
+ esac
+else
+  static=false
 fi
 
 
@@ -15802,6 +15817,14 @@ else
   NUMA_FALSE=
 fi
 
+ if test x$static = xtrue; then
+  STATIC_TRUE=
+  STATIC_FALSE='#'
+else
+  STATIC_TRUE='#'
+  STATIC_FALSE=
+fi
+
 ac_config_files="$ac_config_files Makefile lib/Makefile testsuite/Makefile"
 
 cat >confcache <<\_ACEOF
@@ -15987,6 +16010,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${NUMA_TRUE}" && test -z "${NUMA_FALSE}"; then
   as_fn_error $? "conditional \"NUMA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${STATIC_TRUE}" && test -z "${STATIC_FALSE}"; then
+  as_fn_error $? "conditional \"STATIC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

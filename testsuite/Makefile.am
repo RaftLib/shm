@@ -18,6 +18,10 @@ else
 AM_CPPFLAGS +=-DNUMA=0
 endif
 
+if STATIC
+AM_LDFLAGS += -static -static-libgcc -static-libstdc++
+endif
+
 LDADD= -L$(top_srcdir)/lib -lshm $(LINUXADD)
 TESTS = alloc close nokey outofrange zerobytes wrongkey zerokeylength genkeyoverflow\
         cppstylealloc cppstyleopen

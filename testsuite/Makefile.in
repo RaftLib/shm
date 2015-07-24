@@ -82,18 +82,19 @@ host_triplet = @host@
 @NUMA_TRUE@am__append_3 = -lnuma
 @NUMA_TRUE@am__append_4 = -DNUMA=1
 @NUMA_FALSE@am__append_5 = -DNUMA=0
+@STATIC_TRUE@am__append_6 = -static -static-libgcc -static-libstdc++
 TESTS = alloc$(EXEEXT) close$(EXEEXT) nokey$(EXEEXT) \
 	outofrange$(EXEEXT) zerobytes$(EXEEXT) wrongkey$(EXEEXT) \
 	zerokeylength$(EXEEXT) genkeyoverflow$(EXEEXT) \
 	cppstylealloc$(EXEEXT) cppstyleopen$(EXEEXT) $(am__EXEEXT_1)
-@NUMA_TRUE@am__append_6 = pagemigrate
+@NUMA_TRUE@am__append_7 = pagemigrate
 XFAIL_TESTS = nokey$(EXEEXT) outofrange$(EXEEXT) zerobytes$(EXEEXT) \
 	zerokeylength$(EXEEXT) genkeyoverflow$(EXEEXT)
 check_PROGRAMS = alloc$(EXEEXT) cppstylealloc$(EXEEXT) \
 	cppstyleopen$(EXEEXT) close$(EXEEXT) nokey$(EXEEXT) \
 	outofrange$(EXEEXT) zerobytes$(EXEEXT) wrongkey$(EXEEXT) \
 	zerokeylength$(EXEEXT) genkeyoverflow$(EXEEXT) $(am__EXEEXT_1)
-@NUMA_TRUE@am__append_7 = pagemigrate
+@NUMA_TRUE@am__append_8 = pagemigrate
 subdir = testsuite
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp $(top_srcdir)/test-driver
@@ -557,7 +558,7 @@ AM_CXXFLAGS = -O0 -g -std=c++11
 AM_CFLAGS = -O0 -g -std=c99
 AM_CPPFLAGS = -I$(top_srcdir)/include $(am__append_4) $(am__append_5)
 LINUXADD = $(am__append_1) $(am__append_3)
-AM_LDFLAGS = $(am__append_2)
+AM_LDFLAGS = $(am__append_2) $(am__append_6)
 LDADD = -L$(top_srcdir)/lib -lshm $(LINUXADD)
 alloc_SOURCES = alloc.cpp
 cppstylealloc_SOURCES = cppstylealloc.cpp
