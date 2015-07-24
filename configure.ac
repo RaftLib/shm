@@ -7,12 +7,13 @@ AC_CONFIG_SRCDIR([lib/shm.cpp])
 AC_CONFIG_MACRO_DIR([m4])
 #AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
-AC_ARG_ENABLE([arm],[--enable-arm      turn off features we dont want],
+
+AC_ARG_ENABLE([numa],[--enable-numa      turn off features we dont want],
 [case "${enableval}" in
-   yes) arm=true  ;;
-   no)  arm=false ;;
-   *) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
- esac],[arm=false])
+   yes) numa=true  ;;
+   no)  numa=false ;;
+   *) AC_MSG_ERROR([bad value ${enableval} for --enable-numa]) ;;
+ esac],[numa=false])
 
 # Checks for programs.
 LT_INIT
@@ -57,7 +58,7 @@ esac
 
 AM_CONDITIONAL([DARWIN], [test x$os_darwin = xyes]) 
 AM_CONDITIONAL([LINUX], [test x$os_linux = xyes]) 
-AM_CONDITIONAL([NUMA], [test x$arm = xfalse])
+AM_CONDITIONAL([NUMA], [test x$numa = xtrue])
 AC_CONFIG_FILES([ 
                   Makefile
                   lib/Makefile
