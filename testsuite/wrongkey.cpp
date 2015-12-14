@@ -22,18 +22,19 @@
 #include <shm>
 #include <sstream>
 #include <unistd.h>
+#include <string>
 
 int
 main( int argc, char **argv )
 {
    static const auto key_length( 30 );
-   char key_buff[ key_length ];
-   shm::genkey( key_buff, key_length );
+   std::string key;
+   shm::genkey( key, key_length );
    std::int32_t *ptr( nullptr );
    const auto nbytes( 0x1000 );
    try
    {
-      ptr = reinterpret_cast< std::int32_t* >( shm::init( key_buff, nbytes ) );
+      ptr = reinterpret_cast< std::int32_t* >( shm::init( key, nbytes ) );
    }
    catch( bad_shm_alloc ex )
    {
@@ -52,7 +53,7 @@ main( int argc, char **argv )
    catch( invalid_key_exception ex )
    {
       /** real key so we don't manually cleanup **/
-      shm::close( key_buff, 
+      shm::close( key, 
                   reinterpret_cast<void**>( &ptr), 
                   nbytes,
                   true,
@@ -63,7 +64,7 @@ main( int argc, char **argv )
     * this will should be fine after the file handle dissappears
     */
    std::stringstream ss;
-   ss << "/dev/shm/" << key_buff;
+   ss << "/dev/shm/" << key;
    if( access( ss.str().c_str(), F_OK ) != -1 )
    {
       std::cerr << "File exists!!\n";

@@ -22,19 +22,19 @@
 #include <shm>
 #include <cstring>
 #include <cassert>
+#include <string>
 
 int
 main( int argc, char **argv )
 {
-   static const auto buff_size( 16 );
-   char key_buff[ buff_size ];
-   shm::genkey( key_buff, buff_size );
-   const auto key_length( std::strlen( key_buff ) );
-   assert( key_length == buff_size - 1 );
+   static const auto key_length( 16 );
+   std::string key;
+   shm::genkey( key, key_length );
+   
    std::int32_t *ptr( nullptr );
    try
    {
-      ptr = shm::einit< std::int32_t >( key_buff, 0x1000 );
+      ptr = shm::einit< std::int32_t >( key, 0x1000 );
    }
    catch( bad_shm_alloc ex )
    {
@@ -46,7 +46,7 @@ main( int argc, char **argv )
       ptr[ i ] = i;
    }
    /** if we get to this point then we assume that the mem is writable **/
-   shm::close( key_buff, 
+   shm::close( key, 
                reinterpret_cast<void**>( &ptr), 
                0x1000,
                true,

@@ -1,4 +1,4 @@
-// vim setf cpp:
+// vim: set filetype=cpp:
 /**
  * shm.hpp - 
  * Copyright 2014 Jonathan Beard
@@ -61,14 +61,15 @@ public:
    ~shm()   = delete;;
    
    /**
-    * genkey - generate a shared key at the memory 
-    * address pointed to by ptr *key with length 
-    * length. Last byte is '\0' so length = 256 
-    * results in a key of 255 + 1 null character
-    * @param   buffer - char *
-    * @param   length - std::size_t
+    * genkey - generate a random key to be stored
+    * in the std::string key. The key will be hashed
+    * to ensure that no two keys will be identical,
+    * this function is thread safe. 
+    *
+    * @param   key - std::string&
+    * @param   length - const std::size_t
     */
-   static void genkey(char *buffer, std::size_t length);
+   static void genkey( std::string &key, const std::size_t length );
 
    /**
     * init - initialize SHM segment with file descriptor
@@ -85,7 +86,7 @@ public:
     * @return  void* - ptr to beginning of memory allocated
     * @exception - 
     */
-   static void*   init( const char *key, 
+   static void*   init( const std::string &key, 
                         const std::size_t nbytes,
                         const bool   zero = true,
                         void   *ptr = nullptr );
@@ -93,11 +94,11 @@ public:
    /** 
     * open - opens the shared memory segment with the file
     * descriptor stored at key.
-    * @param   key - const char *
+    * @param   key - const std::string&, initialized key
     * @return  void* - start of allocated memory, or NULL if
     *                  error
     */
-   static void*   open( const char *key );
+   static void*   open( const std::string &key );
 
    /**
     * close - returns true if successful, false otherwise.
@@ -118,7 +119,7 @@ public:
     * @param   zero  - zero mapped region before closing, default: false
     * @return  bool - true if successful.
     */
-   static bool    close( const char *key, 
+   static bool    close( const std::string &key, 
                          void **ptr,
                          const std::size_t nbytes,
                          const bool   zero = false ,
@@ -136,11 +137,29 @@ public:
                        const std::size_t nitems )
    {
       return( reinterpret_cast< T* >( 
-         shm::init( key.c_str(),
+         shm::init( key,
                     nitems * sizeof( T ),
                     true,
                     nullptr ) ) );
    }
+   
+   /**
+    * einit - simple wrapper around shm::init, basically
+    * just casts your void* for you.
+    * @param - key, std::string& with key
+    * @param - nitems, number of items to init of type T
+    */
+   template < class T > 
+      static T* einit( const std::string &key,
+                       const std::size_t nitems )
+   {
+      return( reinterpret_cast< T* >( 
+         shm::init( key,
+                    nitems * sizeof( T ),
+                    true,
+                    nullptr ) ) );
+   }
+
    /**
     * eopen - simple wrapper around shm::open, casts the pointer
     * for you and returns a type T.
@@ -149,9 +168,19 @@ public:
    template < class T >
       static T* eopen( const std::string &&key )
    {
-      return( reinterpret_cast< T* >( shm::open( key.c_str() ) ) );
+      return( reinterpret_cast< T* >( shm::open( key ) ) );
    }
 
+   /**
+    * eopen - simple wrapper around shm::open, casts the pointer
+    * for you and returns a type T.
+    * @param - key, std::string&
+    */
+   template < class T >
+      static T* eopen( const std::string &key )
+   {
+      return( reinterpret_cast< T* >( shm::open( key ) ) );
+   }
    /**
     * move_to_tid_numa - checks the pages at 'pages' pointer,
     * and makes sure that they are on the NUMA node of the 
@@ -170,6 +199,10 @@ public:
    static bool move_to_tid_numa( const pid_t thread_id,
                                  void *ptr,
                                  const std::size_t n_bytes );
+
+private:
+    static const std::int32_t success = 0;
+    static const std::int32_t failure = -1;
                            
 };
 

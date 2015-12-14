@@ -24,17 +24,18 @@
 #include <cstdlib>
 #include <sstream>
 #include <unistd.h>
+#include <string>
 
 int
 main( int argc, char **argv )
 {
-   static const auto buff_size( 30 );
-   char key_buff[ buff_size ];
-   shm::genkey( key_buff, buff_size );
+   static const auto key_length( 30 );
+   std::string key;
+   shm::genkey( key, key_length );
    std::int32_t *ptr( nullptr );
    try
    {
-      ptr = reinterpret_cast< std::int32_t* >( shm::init( key_buff, 0x1000 ) );
+      ptr = reinterpret_cast< std::int32_t* >( shm::init( key, 0x1000 ) );
    }
    catch( bad_shm_alloc ex )
    {
@@ -46,7 +47,7 @@ main( int argc, char **argv )
       ptr[ i ] = i;
    }
    /** if we get to this point then we assume that the mem is writable **/
-   shm::close( key_buff, 
+   shm::close( key, 
                reinterpret_cast<void**>(&ptr), 
                0x1000,
                true, 

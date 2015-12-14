@@ -39,6 +39,8 @@
 #include <iostream>
 #include <sstream>
 #include <cmath>
+#include <climits>
+#include <limits>
 
 #if __APPLE__
 #include <malloc/malloc.h>
@@ -91,14 +93,18 @@ invalid_key_exception::what() const noexcept
 }
 
 void
-shm::genkey( char * const buffer, 
+shm::genkey( std::string &key, 
              const std::size_t length )
 {
-   assert( buffer != nullptr );
-   assert( length >= 8 );
    if( length == 0 )
    {
       throw invalid_key_exception( "Key length must be longer than zero!" );   
+   }
+   else if ( length > NAME_MAX )
+   {
+      std::stringstream errstream;
+      errstream << "Key length must be less than " << NAME_MAX << " characters, exiting!";
+      throw invalid_key_exception( errstream.str() );   
    }
    using key_t = std::uint32_t;
    FILE *fp = std::fopen("/dev/urandom","r");
@@ -112,7 +118,7 @@ shm::genkey( char * const buffer,
    const auto nints( 
       static_cast< std::size_t >( 
          static_cast< float >( length ) / 
-         static_cast< float >( sizeof( std::uint64_t ) ) ) * 2 ); 
+         static_cast< float >( sizeof( std::uint64_t ) ) ) * 2 );
    auto *intptr( new std::uint64_t[ nints ]  );
    if( std::fread( intptr, sizeof( std::uint64_t ), nints, fp) != nints )
    {
@@ -129,6 +135,8 @@ shm::genkey( char * const buffer,
    }
    std::size_t bytes_left( length );
    std::uint64_t *intptr_64( intptr );
+   char * const buffer( (char*) malloc( ( sizeof( char ) * length ) + 1 ) );
+   std::memset( buffer, '\0', (sizeof( char ) * length) + 1 );
    char *buff_ptr( buffer );
    while( bytes_left > 8 )
    {
@@ -146,7 +154,7 @@ shm::genkey( char * const buffer,
       ++intptr_32;
    }
    auto *intptr_16( reinterpret_cast< std::uint16_t* >( intptr_32 ) );
-   while( bytes_left >= 2 )
+   while( bytes_left >= 1 )
    {
       std::snprintf( buff_ptr, 2, "%" PRIu16 "", (*intptr_16) ); 
       bytes_left -= 1;
@@ -154,26 +162,25 @@ shm::genkey( char * const buffer,
       ++intptr_16;
    }
    delete[]( intptr );
+   key = std::string( buffer );
+   std::free( buffer );
    return;
 }
 
 void*
-shm::init( const char * const key,
+shm::init( const std::string &key,
            const std::size_t nbytes,
            const bool zero   /* zero mem */,
            void   *ptr )
 {
-   assert( key != nullptr );
    if( nbytes == 0 )
    {
       throw bad_shm_alloc( "nbytes cannot be zero when allocating memory!" );
    }
-   const std::int32_t success( 0 );
-   const std::int32_t failure( -1 );
-   int fd( failure  );
+   int fd( shm::failure  );
    errno = success;
    /* essentially we want failure if the file exists already */
-   if( access( key, F_OK ) == success )
+   if( access( key.c_str(), F_OK ) == shm::success )
    {
       std::stringstream ss;
       ss << "File exists with name \"" << key << "\", error code returned: ";
@@ -184,8 +191,8 @@ shm::init( const char * const key,
    const std::int32_t flags( O_RDWR | O_CREAT | O_EXCL );
    /* set read/write by user */
    const mode_t mode( S_IWUSR | S_IRUSR );
-   errno = success;
-   fd  = shm_open( key, 
+   errno = shm::success;
+   fd  = shm_open( key.c_str(), 
                    flags, 
                    mode );
    if( fd == failure )
@@ -196,24 +203,35 @@ shm::init( const char * const key,
       ss << std::strerror( errno );
       throw bad_shm_alloc( ss.str() ); 
    }
+   
+   /** before truncation, lets do a sanity check **/
+   const auto num_phys_pages( sysconf( _SC_PHYS_PAGES ) );
+   const auto page_size( sysconf( _SC_PAGE_SIZE ) );
+   const auto total_possible_bytes( num_phys_pages * page_size );
+   if( nbytes > total_possible_bytes )
+   {
+        std::stringstream errstr;
+        errstr << "You've tried to allocate too many bytes (" << nbytes << "),"
+            << " the total possible is (" << total_possible_bytes << ")\n";
+        throw bad_shm_alloc( errstr.str() ); 
+   }
    /* else begin truncate */
    /* else begin mmap */
    /** get allocations size including extra dummy page **/
-   const auto page_size( sysconf( _SC_PAGESIZE ) );
    const auto alloc_bytes( 
       static_cast< std::size_t >( 
          std::ceil(  
             static_cast< float >( nbytes) / 
            static_cast< float >( page_size ) ) + 1 ) * page_size 
    );
-   errno = success;
-   if( ftruncate( fd, alloc_bytes ) != success )
+   errno = shm::success;
+   if( ftruncate( fd, alloc_bytes ) != shm::success )
    {
       std::stringstream ss;
       ss << "Failed to truncate shm for file descriptor (" << fd << ") ";
       ss << "with number of bytes (" << nbytes << ").  Error code returned: ";
       ss << std::strerror( errno );
-      shm_unlink( key );
+      shm_unlink( key.c_str() );
       throw bad_shm_alloc( ss.str() );
    }
    /** 
@@ -221,7 +239,7 @@ shm::init( const char * const key,
     * user has no idea so we'll re-calc this at the  end
     * when we unmap the data.
     */
-   errno = success;
+   errno = shm::success;
    void *out( nullptr );
    out = mmap( ptr, 
                alloc_bytes, 
@@ -232,9 +250,9 @@ shm::init( const char * const key,
    if( out == MAP_FAILED )
    {
       std::stringstream ss;
-      ss << "Failed to mmap shm region with the following error: " << std::strerror( errno ) << ",\n";
-      ss << "unlinking.";
-      shm_unlink( key );
+      ss << "Failed to mmap shm region with the following error: " << 
+        std::strerror( errno ) << ",\n" << "unlinking.";
+      shm_unlink( key.c_str() );
       throw bad_shm_alloc( ss.str() );
    }
    /** mmap should theoretically return start of page **/
@@ -256,30 +274,16 @@ shm::init( const char * const key,
    return( out );
 }
 
-/** 
- * Open - opens the shared memory segment with the file
- * descriptor stored at key.
- * @param   key - const char *
- * @return  void* - start of allocated memory, or NULL if
- *                  error
- */
 void*
-shm::open( const char *key )
+shm::open( const std::string &key )
 {
-   assert( key != nullptr );
    /* accept no zero length keys */
-   assert( strlen( key ) > 0 );
-   const std::int32_t success( 0 );
-   const std::int32_t failure( -1 );
-   int fd( failure );
-   struct stat st;
-   std::memset( &st, 
-                0x0, 
-                sizeof( struct stat ) );
+   assert( key.length() > 0 );
+   int fd( shm::failure );
    const int flags( O_RDWR | O_CREAT );
    mode_t mode( 0 );
    errno = success;
-   fd = shm_open( key, 
+   fd = shm_open( key.c_str(), 
                   flags, 
                   mode ); 
    if( fd == failure )
@@ -289,19 +293,22 @@ shm::open( const char *key )
       ss << std::strerror( errno ); 
       throw bad_shm_alloc( ss.str() );
    }
+   struct stat st;
+   std::memset( &st, 
+                0x0, 
+                sizeof( struct stat ) );
    /* stat the file to get the size */
-   errno = success;
-   if( fstat( fd, &st ) != success )
+   if( fstat( fd, &st ) != shm::success )
    {
       std::stringstream ss;
       ss << "Failed to stat shm region with the following error: " << std::strerror( errno ) << ",\n";
       ss << "unlinking.";
-      shm_unlink( key );
+      shm_unlink( key.c_str() );
       throw bad_shm_alloc( ss.str() );
    }
-   void *out( NULL );
-   errno = success;
-   out = mmap( NULL, 
+   void *out( nullptr );
+   errno = shm::success;
+   out = mmap( nullptr, 
                st.st_size, 
                (PROT_READ | PROT_WRITE), 
                MAP_SHARED, 
@@ -312,7 +319,7 @@ shm::open( const char *key )
       std::stringstream ss;
       ss << "Failed to mmap shm region with the following error: " << std::strerror( errno ) << ",\n";
       ss << "unlinking.";
-      shm_unlink( key );
+      shm_unlink( key.c_str() );
       throw bad_shm_alloc( ss.str() );
    }
    /* close fd */
@@ -322,16 +329,15 @@ shm::open( const char *key )
 }
 
 bool
-shm::close( const char *key,
+shm::close( const std::string &key,
             void **ptr,
             const std::size_t nbytes,
             const bool zero,
             const bool unlink )
 {
-   const auto success( 0 );
    if( ptr != nullptr )
    {
-      if( zero and ( *ptr != nullptr ) )
+      if( zero && ( *ptr != nullptr ) )
       {
          std::memset( *ptr, 0x0, nbytes );
       }
@@ -343,8 +349,8 @@ shm::close( const char *key,
                static_cast< float >( nbytes ) / 
               static_cast< float >( page_size ) ) + 1 ) * page_size 
       );
-      errno = success;
-      if( ( *ptr not_eq nullptr ) and ( munmap( *ptr, alloc_bytes ) not_eq success ) )
+      errno = shm::success;
+      if( ( *ptr != nullptr ) && ( munmap( *ptr, alloc_bytes ) != shm::success ) )
       {
 #if DEBUG   
          perror( "Failed to unmap shared memory, attempting to close!!" );
@@ -354,8 +360,7 @@ shm::close( const char *key,
    }
    if( unlink )
    {
-      errno = success;
-      if( shm_unlink( key ) != 0 )
+      if( shm_unlink( key.c_str() ) != shm::success )
       {
          switch( errno )
          {

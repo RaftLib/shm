@@ -22,19 +22,18 @@
 #include <shm>
 #include <cstring>
 #include <cassert>
+#include <string>
 
 int
 main( int argc, char **argv )
 {
-   static const auto buff_size( 16 );
-   char key_buff[ buff_size ];
-   shm::genkey( key_buff, buff_size );
-   const auto key_length( std::strlen( key_buff ) );
-   assert( key_length == buff_size - 1 );
+   static const auto key_length( 16 );
+   std::string key;
+   shm::genkey( key, key_length );
    std::int32_t *ptr( nullptr );
    try
    {
-      ptr = shm::einit< std::int32_t >( key_buff, 100 );
+      ptr = shm::einit< std::int32_t >( key, 100 );
    }
    catch( bad_shm_alloc ex )
    {
@@ -48,7 +47,7 @@ main( int argc, char **argv )
    std::int32_t *ptr2( nullptr );
    try
    {
-      ptr2 = shm::eopen< std::int32_t >( key_buff );
+      ptr2 = shm::eopen< std::int32_t >( key );
    }
    catch( bad_shm_alloc ex )
    {
@@ -57,7 +56,7 @@ main( int argc, char **argv )
    }
    if(  std::memcmp( ptr,ptr2, 100 * sizeof( std::int32_t ) ) != 0 )
    {
-      shm::close( key_buff, 
+      shm::close( key, 
                   reinterpret_cast<void**>( &ptr), 
                   0x1000,
                   true,
@@ -66,7 +65,7 @@ main( int argc, char **argv )
       assert( false );
    }
    /** if we get to this point then we assume that the mem is writable **/
-   shm::close( key_buff, 
+   shm::close( key, 
                reinterpret_cast<void**>( &ptr), 
                0x1000,
                true,

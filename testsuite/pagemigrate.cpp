@@ -21,6 +21,8 @@
 #include <iostream>
 #include <shm>
 #include <cassert>
+#include <string>
+
 #ifdef __linux
 /** for get cpu **/
 #if (__GLIBC_MINOR__ < 14) && (__GLIBC__ <= 2)
@@ -89,7 +91,7 @@ struct Data
    {
       shm::genkey( key_buff, 30 );
    }
-   char key_buff[ 30 ];
+   std::string key_buff;
    void **ptr;
 };
 

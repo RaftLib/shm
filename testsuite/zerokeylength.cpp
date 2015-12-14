@@ -24,7 +24,16 @@
 int
 main( int argc, char **argv )
 {
-   char key_buff[ 256 ];
-   shm::genkey( key_buff, 0 );
-   return( EXIT_SUCCESS );
+    std::string key( "" );
+    try
+    {
+        shm::genkey( key, 0 );
+    }
+    catch( invalid_key_exception &ex )
+    {
+        /** this is where we should end up **/
+        std::cerr << ex.what() << "\n";
+        return( EXIT_SUCCESS );
+    }
+    return( EXIT_SUCCESS );
 }

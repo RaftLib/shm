@@ -20,25 +20,28 @@
 #include <cstdint>
 #include <iostream>
 #include <shm>
+#include <string>
 
 int
 main( int argc, char **argv )
 {
-   char key_buff[ 256 ];
-   shm::genkey( key_buff, 256 );
+   const auto key_length( 22 );
+   std::string key;
+   shm::genkey( key, key_length );
    std::int32_t *ptr( nullptr );
    const auto nbytes( 0 );
    try
    {
-      ptr = reinterpret_cast< std::int32_t* >( shm::init( key_buff, nbytes ) );
+      ptr = reinterpret_cast< std::int32_t* >( shm::init( key, nbytes ) );
    }
    catch( bad_shm_alloc ex )
    {
+      /** this is where we wanted to end up **/
       std::cerr << ex.what() << "\n";
-      exit( EXIT_FAILURE );
+      exit( EXIT_SUCCESS );
    }
    /** if we get to this point then we assume that the mem is writable **/
-   shm::close( key_buff, 
+   shm::close( key, 
                reinterpret_cast<void**>(&ptr), 
                nbytes,
                true,
