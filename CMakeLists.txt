@@ -19,13 +19,21 @@ find_library( NUMA_LIBRARY
               /opt/local/lib )
 if( NUMA_LIBRARY )
     set( CMAKE_NUMA_LIBS ${NUMA_LIBRARY} )
-else()
+else( NUMA_LIBRARY )
 ##
 # get machine type
 ##
     execute_process( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
-    message( STATUS "found architecture: ${ARCHITECTURE}" )
-endif()
+    execute_process( COMMAND ${CMAKE_SOURCE_DIR}/scripts/findnodes.pl
+                     COMMAND tr -d '\n' HASNUMA )
+    if( HASNUMA EQUAL 0 )
+        ## no NUMA
+        message( STATUS "no NUMA needed" );
+    else( HASNUMA EQUAL 0 )
+        ## needs NUMA but we don't have it
+        message( FATAL_ERROR "You are compiling on a NUMA system, you must install libnuma" )
+    endif( HASNUMA EQUAL 0 )
+endif( NUMA_LIBRARY )
 
 endif( CMAKE_HOST_UNIX )
 
