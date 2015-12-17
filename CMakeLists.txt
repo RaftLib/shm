@@ -6,10 +6,9 @@ set( CMAKE_INCLUDE_CURRENT_DIR ON )
 
 
 ##
-# start check for NUMA libs
-# var CMAKE_NUMA_LIBS will default to "" on non-unix platforms
+# at this point we just need a warning
 ##
-if( NOT CMAKE_HOST_UNIX )
+if( CMAKE_HOST_UNIX )
 find_library( NUMA_LIBRARY
               NAMES numa
               PATHS
