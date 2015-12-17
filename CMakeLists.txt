@@ -4,6 +4,33 @@ set( version 1.1 )
 set( CMAKE_INCLUDE_CURRENT_DIR ON )
 
 
+
+##
+# start check for NUMA libs
+# var CMAKE_NUMA_LIBS will default to "" on non-unix platforms
+##
+if( NOT CMAKE_HOST_UNIX )
+find_library( NUMA_LIBRARY
+              NAMES numa
+              PATHS
+              ${CMAKE_LIBRARY_PATH}
+              $ENV{NUMA_PATH}/lib
+              /usr/lib
+              /usr/local/lib
+              /opt/local/lib )
+if( NUMA_LIBRARY )
+    set( CMAKE_NUMA_LIBS ${NUMA_LIBRARY} )
+else()
+##
+# get machine type
+##
+    execute_process( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
+    message( STATUS "found architecture: ${ARCHITECTURE}" )
+endif()
+mark_as_advanced( NUMA_LIBRARY CMAKE_NUMA_LIBS )
+endif( NOT CMAKE_HOST_UNIX )
+
+
 include_directories ( ${PROJECT_SOURCE_DIR} )
 include_directories ( ${PROJECT_SOURCE_DIR}/include )
 
