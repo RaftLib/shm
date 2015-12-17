@@ -28,7 +28,7 @@ else( NUMA_LIBRARY )
                      COMMAND tr -d '\n' HASNUMA )
     if( HASNUMA EQUAL 0 )
         ## no NUMA
-        message( STATUS "no NUMA needed" );
+        message( STATUS "no NUMA needed" )
     else( HASNUMA EQUAL 0 )
         ## needs NUMA but we don't have it
         message( FATAL_ERROR "You are compiling on a NUMA system, you must install libnuma" )
