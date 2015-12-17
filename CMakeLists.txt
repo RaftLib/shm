@@ -26,8 +26,8 @@ else()
     execute_process( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
     message( STATUS "found architecture: ${ARCHITECTURE}" )
 endif()
-mark_as_advanced( NUMA_LIBRARY CMAKE_NUMA_LIBS )
-endif( NOT CMAKE_HOST_UNIX )
+
+endif( CMAKE_HOST_UNIX )
 
 
 include_directories ( ${PROJECT_SOURCE_DIR} )
