@@ -2,17 +2,25 @@
 use strict;
 use warnings;
 
-my $cmdstr =  "grep -oP \"(?<=Node\\s)\\d\" /proc/zoneinfo";
-my $nodelist = `$cmdstr`;
-chomp( $nodelist );
-my @arr = split/\n/,$nodelist;
-my $first = shift( @arr );
-foreach my $val ( @arr )
+##
+# added __linux check since well, this only works
+# for systems with /proc fs. Need to check Win
+# for NUMA control.
+##
+if( defined $ENV{ "__linux" } )
 {
-    if( $val != $first )
+    my $cmdstr =  "grep -oP \"(?<=Node\\s)\\d\" /proc/zoneinfo";
+    my $nodelist = `$cmdstr`;
+    chomp( $nodelist );
+    my @arr = split/\n/,$nodelist;
+    my $first = shift( @arr );
+    foreach my $val ( @arr )
     {
-        print( 1 );
-        exit( 0 );
+        if( $val != $first )
+        {
+            print( 1 );
+            exit( 0 );
+        }
     }
 }
 print( 0 );
