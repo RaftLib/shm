@@ -81,7 +81,6 @@ set( TESTAPPS   alloc
                 cppstylealloc
                 cppstyleopen
                 outofrange
-                pagemigrate
                 wrongkey
                 zerobytes
                 zerokeylength )
