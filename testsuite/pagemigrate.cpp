@@ -102,7 +102,9 @@ void* thr( void *ptr )
    set_affinity( max_core );
    try
    {
-      *data->ptr = reinterpret_cast< std::int32_t* >( shm::init( data->key_buff, 0x1000 ) );
+      *data->ptr = reinterpret_cast< std::int32_t* >( 
+        shm::init( data->key_buff, 0x1000 ) 
+       );
    }
    catch( bad_shm_alloc ex )
    {
