@@ -9,6 +9,9 @@ crashes (you know, things happen right?).  I've tested the
 code on OS X and Linux, but as usual your mileage may vary
 greatly.
 
+#Build Status
+[![Build Status](https://travis-ci.org/RaftLib/shm.svg?branch=master)](https://travis-ci.org/RaftLib/shm)
+
 #Important Notes
 So I've checked the functions found in the testsuite.  I've
 used the code quite a bit in various forms so it should work
