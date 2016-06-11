@@ -18,10 +18,12 @@ if( defined $ENV{ "__linux" } )
     {
         if( $val != $first )
         {
-            print( 1 );
+            print( "1" );
             exit( 0 );
         }
     }
+    `touch foo`;
+    exit( 0 );
 }
-print( 0 );
+print( "0" );
 exit( 0 );
