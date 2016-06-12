@@ -19,6 +19,7 @@ find_library( NUMA_LIBRARY
               /opt/local/lib )
 if( NUMA_LIBRARY )
     set( CMAKE_NUMA_LIBS ${NUMA_LIBRARY} )
+    add_definitions( "-DPLATFORM_HAS_NUMA=1" )
 else( NUMA_LIBRARY )
 ##
 # get machine type
@@ -30,6 +31,7 @@ else( NUMA_LIBRARY )
     if( HASNUMA EQUAL 0 )
         ## no NUMA
         message( STATUS "no NUMA needed" )
+        add_definitions( "-DPLATFORM_HAS_NUMA=0" )
     else( HASNUMA EQUAL 0 )
         ## needs NUMA but we don't have it
         message( FATAL_ERROR "You are compiling on a NUMA system, you must install libnuma" )

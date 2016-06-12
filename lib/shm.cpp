@@ -50,8 +50,12 @@
 /** might need to install numactl-dev **/
 #include <sys/sysinfo.h>
 #include <malloc.h>
+
+#if PLATFORM_HAS_NUMA == 1
 #include <numaif.h>
 #include <numa.h>
+#endif 
+
 #endif
 
 bad_shm_alloc::bad_shm_alloc( const std::string message ) : std::exception(),
@@ -381,7 +385,7 @@ shm::move_to_tid_numa( const pid_t thread_id,
                        void *ptr,
                        const std::size_t nbytes )
 {
-#if __linux && ( NUMA == 1 )
+#if __linux && ( PLATFORM_HAS_NUMA == 1 )
    /** check alignment of pages first **/
    const auto page_size( sysconf( _SC_PAGESIZE ) );
    
