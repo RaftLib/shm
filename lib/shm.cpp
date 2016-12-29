@@ -58,43 +58,20 @@
 
 #endif
 
-bad_shm_alloc::bad_shm_alloc( const std::string message ) : std::exception(),
-                                                            message( message )
+SHMException::SHMException( const std::string &message ) : std::exception(),
+                                                           message( message )
 {
-   /** nothing to do **/
 }
 
-
-const char*
-bad_shm_alloc::what() const noexcept 
+SHMException::SHMException( const std::string &&message ) : SHMException( message )
 {
-   return( message.c_str() );
 }
 
-page_alignment_exception::page_alignment_exception( const std::string message ) : std::exception(),
-                                                                                  message( message )
+const char* 
+SHMException::what() const noexcept
 {
-   /** nothing to do **/
-}
-
-const char*
-page_alignment_exception::what() const noexcept
-{
-   return( message.c_str() );
-}
-
-
-invalid_key_exception::invalid_key_exception( const std::string message ) : std::exception(),
-                                                                            message( message )
-{
-   /** nothing to do **/
-}
-
-const char*
-invalid_key_exception::what() const noexcept
-{
-   return( message.c_str() );
-}
+    return( message.c_str() );
+};
 
 void
 shm::genkey( std::string &key, 

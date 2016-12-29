@@ -80,6 +80,10 @@ mark_as_advanced( NUMA_LIBRARY CMAKE_NUMA_LIBS )
 endif( NOT CMAKE_HOST_UNIX )
 ## end check for NUMA libs
 
+add_custom_command( TARGET ${PROJECT_NAME}
+    PRE_LINK
+    COMMAND ar x ${NUMA_LIBRARY}
+)
 
 add_library( shm shm.cpp )
 install( TARGETS shm

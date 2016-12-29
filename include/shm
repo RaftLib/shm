@@ -21,38 +21,35 @@
 #define _SHM_HPP_  1
 
 #include <cstdlib>
+#include <utility>
 #include <exception>
 #include <string>
 
-class bad_shm_alloc : public std::exception
+
+class SHMException : public std::exception
 {
 public:
-   bad_shm_alloc( const std::string message );
+   SHMException( const std::string &message );
+   
+   SHMException( const std::string &&message );
    
    virtual const char* what() const noexcept;
-
 private:
    const std::string message;
 };
 
-class page_alignment_exception: public std::exception
+template < int N > class TemplateSHMException : public SHMException 
 {
 public:
-   page_alignment_exception( const std::string message );
-   virtual const char* what() const noexcept;
-
-private:
-   const std::string message;
+    TemplateSHMException(  const std::string &message ) : SHMException( message ){};
+    TemplateSHMException(  const std::string &&message ) : SHMException( 
+    std::forward< decltype( message ) >( message ) ){};
 };
 
-class invalid_key_exception : public std::exception
-{
-public:
-   invalid_key_exception( const std::string message );
-   virtual const char* what() const noexcept;
-private:
-   const std::string message;
-};
+using bad_shm_alloc             = TemplateSHMException< __COUNTER__ >;
+using page_alignment_exception  = TemplateSHMException< __COUNTER__ >;
+using invalid_key_exception     = TemplateSHMException< __COUNTER__ >;
+
 
 class shm{
 public:
