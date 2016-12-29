@@ -5,7 +5,10 @@ use warnings;
 ##
 # added __linux check since well, this only works
 # for systems with /proc fs. Need to check Win
-# for NUMA control.
+# for NUMA control. Mac OS doesn't give find grained
+# NUMA control even for the few of their systems that
+# have it...
+# TODO, check for hetereogeneous mem controls
 ##
 if( defined $ENV{ "__linux" } )
 {
