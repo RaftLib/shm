@@ -17,7 +17,7 @@ cache:
 
 env:
     global:
-        - GCC_VERSION=5
+        - GCC_VERSION=6
         - CXXFLAGS=-std=c++14
         - CFLAGS=-std=c99
 
@@ -28,7 +28,7 @@ branches:
 
 before_install:
     -   if [ ${CC} != "clang" ]; then
-            export CC=/usr/bin/gcc-${GCC_VERSION} CXX=/usr/bin/g++-${GCC_VERSION};
+            export CC=gcc CXX=/usr/bin/g++;
             C=gcc;
         fi
 
