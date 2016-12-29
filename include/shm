@@ -58,7 +58,7 @@ class shm{
 public:
    
    shm()    = delete;
-   ~shm()   = delete;;
+   ~shm()   = delete;
    
    /**
     * genkey - generate a random key to be stored
