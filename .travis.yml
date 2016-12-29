@@ -39,8 +39,8 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
 # ensure these match GCC_VERSION
-      - gcc-5
-      - g++-5
+      - gcc-6
+      - g++-6
       - binutils
       - gawk
       - build-essential
