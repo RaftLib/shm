@@ -17,8 +17,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <cstdint>
 #include <iostream>
+#include <limits>
 #include <shm>
 #include <string>
 
@@ -31,7 +33,7 @@ main( int argc, char **argv )
    std::int32_t *ptr( nullptr );
    try
    {
-      ptr = reinterpret_cast< std::int32_t* >( shm::init( key, UINT64_MAX ) );
+      ptr = reinterpret_cast< std::int32_t* >( shm::init( key, std::numeric_limits<std::uint64_t>::max() ) );
    }
    catch( bad_shm_alloc ex )
    {
