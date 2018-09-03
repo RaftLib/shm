@@ -58,9 +58,6 @@ include_directories ( ${PROJECT_SOURCE_DIR}/include )
 add_subdirectory( lib )
 add_subdirectory( testsuite )
 
-##
-# enable minimal testsuite
-##
 set( TESTAPPS   alloc
                 close
                 cppstylealloc
@@ -68,7 +65,8 @@ set( TESTAPPS   alloc
                 outofrange
                 wrongkey
                 zerobytes
-                zerokeylength )
+                zerokeylength 
+                tworandomkeys )
 
 enable_testing()
 foreach( TEST ${TESTAPPS} )

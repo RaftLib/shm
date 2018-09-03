@@ -95,56 +95,28 @@ shm::genkey( std::string &key,
       std::perror( err );
       exit( EXIT_FAILURE );
    }
-   /** figure out how many ints we'll need **/
-   const auto nints( 
-      static_cast< std::size_t >( 
-         static_cast< float >( length ) / 
-         static_cast< float >( sizeof( std::uint64_t ) ) ) * 2 );
-   auto *intptr( new std::uint64_t[ nints ]  );
-   if( std::fread( intptr, sizeof( std::uint64_t ), nints, fp) != nints )
+   static const char num[] = "0123456789";
+   std::uint8_t *array = (std::uint8_t*)malloc( sizeof( std::uint8_t ) * length );
+   if( array == nullptr )
    {
-      /** BAIL OUT **/
-      const char *err = "Error, incorrect number of ints retured!!\n";
-      std::fclose(fp);
-      delete[]( intptr );
-      std::perror(err);
-      exit( EXIT_FAILURE );
+      fclose( fp );
+      throw bad_shm_alloc( "failed to allocate array for initalizing integers" );
    }
-   else
+   if( std::fread( array, sizeof( std::uint8_t ), length, fp ) != length )
    {
-      std::fclose( fp );
+      fclose( fp );
+      free( array );
+      throw bad_shm_alloc( "failed to read enough integers to satisfy key length" );
    }
-   std::size_t bytes_left( length );
-   std::uint64_t *intptr_64( intptr );
-   char * const buffer( (char*) malloc( ( sizeof( char ) * length ) + 1 ) );
-   std::memset( buffer, '\0', (sizeof( char ) * length) + 1 );
-   char *buff_ptr( buffer );
-   while( bytes_left > 8 )
+   std::stringstream ss;
+   for( auto i( 0 ); i < length; i++ )
    {
-      std::snprintf( buff_ptr, 8, "%" PRIu64 "", (*intptr_64) );
-      ++intptr_64;
-      bytes_left -= 7;
-      buff_ptr += 7;
+      ss << num[ array[ i ] % (sizeof( num ) - 1 ) ];
    }
-   auto *intptr_32( reinterpret_cast< std::uint32_t* >( intptr_64 ) );
-   while( bytes_left > 4 )
-   {
-      std::snprintf( buff_ptr, 4, "%" PRIu32 "", (*intptr_32) ); 
-      bytes_left -= 3;
-      buff_ptr += 3;
-      ++intptr_32;
-   }
-   auto *intptr_16( reinterpret_cast< std::uint16_t* >( intptr_32 ) );
-   while( bytes_left >= 1 )
-   {
-      std::snprintf( buff_ptr, 2, "%" PRIu16 "", (*intptr_16) ); 
-      bytes_left -= 1;
-      buff_ptr += 1;
-      ++intptr_16;
-   }
-   delete[]( intptr );
-   key = std::string( buffer );
-   std::free( buffer );
+
+   free( array );
+   fclose( fp );
+   key = ss.str();
    return;
 }
 

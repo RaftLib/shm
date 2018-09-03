@@ -83,7 +83,9 @@ set( TESTAPPS   alloc
                 outofrange
                 wrongkey
                 zerobytes
-                zerokeylength )
+                zerokeylength 
+                tworandomkeys 
+                 )
 
 include_directories( ${CMAKE_SOURCE_DIR}/include )
 
