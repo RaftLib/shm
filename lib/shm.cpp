@@ -194,6 +194,23 @@ shm::init( const std::string &key,
     */
    errno = shm::success;
    void *out( nullptr );
+
+   /** 
+    * NOTE: might be useful to change page size to something larger than default
+    * for some applications. We'll add that as a future option, however, for now
+    * I'll leave the note here.
+    * flags = MAP_HUGETLB | MAP_ANONYMOUS | MAP_HUGE_2MB
+    * flags = MAP_HUGETLB | MAP_ANONYMOUS | MAP_HUGE_1GB
+    * we'll need to make sure huge pages are installed/enabled first
+    * for ubuntu + apt:
+    * apt-get install hugepages
+    * you'll need to set it up, some good info if you don't know what you're 
+    * doing is here: https://kerneltalks.com/services/what-is-huge-pages-in-linux/
+    * you'll likely need to reboot to clear out any funky kernel states, once you're done,
+    * write a test program and make sure that you're allocating, the command:
+    * hugeadm --explain 
+    * should tell you what's set up and in use.
+    */
    out = mmap( ptr, 
                alloc_bytes, 
                ( PROT_READ | PROT_WRITE ), 
