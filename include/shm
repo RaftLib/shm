@@ -112,8 +112,8 @@ public:
     * @param   key - const char*
     * @param   ptr - ptr to start of mapped region
     * @param   nbytes - number of bytes for each element in mapped region
-    * @param   nitems - total number of items with size nbytes
     * @param   zero  - zero mapped region before closing, default: false
+    * @param   unlink - call unlink, decrement OS open count for handle
     * @return  bool - true if successful.
     */
    static bool    close( const std::string &key, 
