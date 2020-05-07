@@ -77,6 +77,7 @@ endif( NOT CMAKE_HOST_UNIX )
 # end check for NUMA libs
 
 set( TESTAPPS   alloc
+                doublealloc
                 close
                 cppstylealloc
                 cppstyleopen
@@ -90,6 +91,7 @@ set( TESTAPPS   alloc
 include_directories( ${CMAKE_SOURCE_DIR}/include )
 
 foreach( APP ${TESTAPPS} )
- add_executable( ${APP} "${APP}.cpp" )
- target_link_libraries( ${APP} shm ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_RT_LIBS} ${CMAKE_NUMA_LIBS} )
+    add_executable( ${APP} "${APP}.cpp" )
+    target_link_libraries( ${APP} shm ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_RT_LIBS} ${CMAKE_NUMA_LIBS} )
+    add_test( NAME "${APP}_test" COMMAND ${APP} )
 endforeach( APP ${TESTAPPS} )

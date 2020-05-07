@@ -46,9 +46,10 @@ public:
     std::forward< decltype( message ) >( message ) ){};
 };
 
-using bad_shm_alloc             = TemplateSHMException< __COUNTER__ >;
-using page_alignment_exception  = TemplateSHMException< __COUNTER__ >;
-using invalid_key_exception     = TemplateSHMException< __COUNTER__ >;
+using bad_shm_alloc                      = TemplateSHMException< __COUNTER__ >;
+using shm_already_exists                 = TemplateSHMException< __COUNTER__ >;
+using page_alignment_exception           = TemplateSHMException< __COUNTER__ >;
+using invalid_key_exception              = TemplateSHMException< __COUNTER__ >;
 
 
 class shm{

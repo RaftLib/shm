@@ -126,117 +126,118 @@ shm::init( const std::string &key,
            const bool zero   /* zero mem */,
            void   *ptr )
 {
-   if( nbytes == 0 )
-   {
-      throw bad_shm_alloc( "nbytes cannot be zero when allocating memory!" );
-   }
-   int fd( shm::failure  );
-   errno = success;
-   /* essentially we want failure if the file exists already */
-   if( access( key.c_str(), F_OK ) == shm::success )
-   {
-      std::stringstream ss;
-      ss << "File exists with name \"" << key << "\", error code returned: ";
-      ss << std::strerror( errno );
-      throw bad_shm_alloc( ss.str() );
-   }
-   /* set read/write set create if not exists */
-   const std::int32_t flags( O_RDWR | O_CREAT | O_EXCL );
-   /* set read/write by user */
-   const mode_t mode( S_IWUSR | S_IRUSR );
-   errno = shm::success;
-   fd  = shm_open( key.c_str(), 
-                   flags, 
-                   mode );
-   if( fd == failure )
-   {
-      std::stringstream ss;
-      ss << "Failed to open shm with file descriptor \"" << 
-         key << "\", error code returned: ";
-      ss << std::strerror( errno );
-      throw bad_shm_alloc( ss.str() ); 
-   }
-   
-   /** before truncation, lets do a sanity check **/
-   const auto num_phys_pages( sysconf( _SC_PHYS_PAGES ) );
-   const auto page_size( sysconf( _SC_PAGE_SIZE ) );
-   const auto total_possible_bytes( num_phys_pages * page_size );
-   if( nbytes > total_possible_bytes )
-   {
-        std::stringstream errstr;
-        errstr << "You've tried to allocate too many bytes (" << nbytes << "),"
-            << " the total possible is (" << total_possible_bytes << ")\n";
-        throw bad_shm_alloc( errstr.str() ); 
-   }
-   /* else begin truncate */
-   /* else begin mmap */
-   /** get allocations size including extra dummy page **/
-   const auto alloc_bytes( 
-      static_cast< std::size_t >( 
-         std::ceil(  
-            static_cast< float >( nbytes) / 
-           static_cast< float >( page_size ) ) + 1 ) * page_size 
-   );
-   errno = shm::success;
-   if( ftruncate( fd, alloc_bytes ) != shm::success )
-   {
-      std::stringstream ss;
-      ss << "Failed to truncate shm for file descriptor (" << fd << ") ";
-      ss << "with number of bytes (" << nbytes << ").  Error code returned: ";
-      ss << std::strerror( errno );
-      shm_unlink( key.c_str() );
-      throw bad_shm_alloc( ss.str() );
-   }
-   /** 
-    * NOTE: actual allocation size should be alloc_bytes,
-    * user has no idea so we'll re-calc this at the  end
-    * when we unmap the data.
-    */
-   errno = shm::success;
-   void *out( nullptr );
+    if( nbytes == 0 )
+    {
+       throw bad_shm_alloc( "nbytes cannot be zero when allocating memory!" );
+    }
+    int fd( shm::failure  );
+    
+    /* set read/write set create if not exists */
+    const std::int32_t flags( O_RDWR | O_CREAT | O_EXCL );
+    /* set read/write by user */
+    const mode_t mode( S_IWUSR | S_IRUSR );
+    errno = shm::success;
+    fd  = shm_open( key.c_str(), 
+                    flags, 
+                    mode );
+    if( fd == failure )
+    {
+        std::stringstream ss;
+        if( errno == EEXIST )
+        {
+            ss << "SHM Handle already exists \"" << key << "\" already exists, please use open\n";
+            throw shm_already_exists( ss.str() );
+        }
+        else 
+        {
+            ss << "Failed to open shm with file descriptor \"" << 
+               key << "\", error code returned: ";
+            ss << std::strerror( errno );
+            throw bad_shm_alloc( ss.str() ); 
+                
+        }
+    }
+    
+    /** before truncation, lets do a sanity check **/
+    const auto num_phys_pages( sysconf( _SC_PHYS_PAGES ) );
+    const auto page_size( sysconf( _SC_PAGE_SIZE ) );
+    const auto total_possible_bytes( num_phys_pages * page_size );
+    if( nbytes > total_possible_bytes )
+    {
+         std::stringstream errstr;
+         errstr << "You've tried to allocate too many bytes (" << nbytes << "),"
+             << " the total possible is (" << total_possible_bytes << ")\n";
+         throw bad_shm_alloc( errstr.str() ); 
+    }
+    /* else begin truncate */
+    /* else begin mmap */
+    /** get allocations size including extra dummy page **/
+    const auto alloc_bytes( 
+       static_cast< std::size_t >( 
+          std::ceil(  
+             static_cast< float >( nbytes) / 
+            static_cast< float >( page_size ) ) + 1 ) * page_size 
+    );
+    errno = shm::success;
+    if( ftruncate( fd, alloc_bytes ) != shm::success )
+    {
+       std::stringstream ss;
+       ss << "Failed to truncate shm for file descriptor (" << fd << ") ";
+       ss << "with number of bytes (" << nbytes << ").  Error code returned: ";
+       ss << std::strerror( errno );
+       shm_unlink( key.c_str() );
+       throw bad_shm_alloc( ss.str() );
+    }
+    /** 
+     * NOTE: actual allocation size should be alloc_bytes,
+     * user has no idea so we'll re-calc this at the  end
+     * when we unmap the data.
+     */
+    errno = shm::success;
+    void *out( nullptr );
 
-   /** 
-    * NOTE: might be useful to change page size to something larger than default
-    * for some applications. We'll add that as a future option, however, for now
-    * I'll leave the note here.
-    * flags = MAP_HUGETLB | MAP_ANONYMOUS | MAP_HUGE_2MB
-    * flags = MAP_HUGETLB | MAP_ANONYMOUS | MAP_HUGE_1GB
-    * we'll need to make sure huge pages are installed/enabled first
-    * for ubuntu + apt:
-    * apt-get install hugepages
-    * you'll need to set it up, some good info if you don't know what you're 
-    * doing is here: https://kerneltalks.com/services/what-is-huge-pages-in-linux/
-    * you'll likely need to reboot to clear out any funky kernel states, once you're done,
-    * write a test program and make sure that you're allocating, the command:
-    * hugeadm --explain 
-    * should tell you what's set up and in use.
-    */
-   out = mmap( ptr, 
-               alloc_bytes, 
-               ( PROT_READ | PROT_WRITE ), 
-               MAP_SHARED, 
-               fd, 
-               0 );
-   if( out == MAP_FAILED )
-   {
-      std::stringstream ss;
-      ss << "Failed to mmap shm region with the following error: " << 
-        std::strerror( errno ) << ",\n" << "unlinking.";
-      shm_unlink( key.c_str() );
-      throw bad_shm_alloc( ss.str() );
-   }
-   /** mmap should theoretically return start of page **/
-   assert( reinterpret_cast< std::uintptr_t >( out ) % page_size == 0 );
-   if( zero )
-   {
-      /* everything theoretically went well, lets initialize to zero */
-      std::memset( out, 0x0, nbytes );
-   }
-   char *temp( reinterpret_cast< char* >( out ) );
-   if( mprotect( (void*) &temp[ alloc_bytes - page_size ],
-                  page_size, 
-                  PROT_NONE ) != 0 )
-   {
+    /** 
+     * NOTE: might be useful to change page size to something larger than default
+     * for some applications. We'll add that as a future option, however, for now
+     * I'll leave the note here.
+     * flags = MAP_HUGETLB | MAP_ANONYMOUS | MAP_HUGE_2MB
+     * flags = MAP_HUGETLB | MAP_ANONYMOUS | MAP_HUGE_1GB
+     * we'll need to make sure huge pages are installed/enabled first
+     * for ubuntu + apt:
+     * apt-get install hugepages
+     * you'll need to set it up, some good info if you don't know what you're 
+     * doing is here: https://kerneltalks.com/services/what-is-huge-pages-in-linux/
+     * you'll likely need to reboot to clear out any funky kernel states, once you're done,
+     * write a test program and make sure that you're allocating, the command:
+     * hugeadm --explain 
+     * should tell you what's set up and in use.
+     */
+    out = mmap( ptr, 
+                alloc_bytes, 
+                ( PROT_READ | PROT_WRITE ), 
+                MAP_SHARED, 
+                fd, 
+                0 );
+    if( out == MAP_FAILED )
+    {
+       std::stringstream ss;
+       ss << "Failed to mmap shm region with the following error: " << 
+         std::strerror( errno ) << ",\n" << "unlinking.";
+       shm_unlink( key.c_str() );
+       throw bad_shm_alloc( ss.str() );
+    }
+    /** mmap should theoretically return start of page **/
+    assert( reinterpret_cast< std::uintptr_t >( out ) % page_size == 0 );
+    if( zero )
+    {
+       /* everything theoretically went well, lets initialize to zero */
+       std::memset( out, 0x0, nbytes );
+    }
+    char *temp( reinterpret_cast< char* >( out ) );
+    if( mprotect( (void*) &temp[ alloc_bytes - page_size ],
+                   page_size, 
+                   PROT_NONE ) != 0 )
+    {
 #if DEBUG   
       perror( "Error, failed to set page protection, not fatal just dangerous." );
 #endif      

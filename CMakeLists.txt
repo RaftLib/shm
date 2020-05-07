@@ -56,19 +56,10 @@ include_directories ( ${PROJECT_SOURCE_DIR} )
 include_directories ( ${PROJECT_SOURCE_DIR}/include )
 
 add_subdirectory( lib )
-add_subdirectory( testsuite )
 
-set( TESTAPPS   alloc
-                close
-                cppstylealloc
-                cppstyleopen
-                outofrange
-                wrongkey
-                zerobytes
-                zerokeylength 
-                tworandomkeys )
-
-enable_testing()
-foreach( TEST ${TESTAPPS} )
- add_test( NAME "${TEST}_test" COMMAND ${TEST} )
-endforeach( TEST ${TESTAPPS} )
+mark_as_advanced( BUILD_TESTS )
+set( BUILD_TESTS trrue CACHE BOOL "Tests build target available if true" )
+if( BUILD_TESTS )
+    enable_testing()
+    add_subdirectory( testsuite )
+endif()
