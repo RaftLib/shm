@@ -34,7 +34,9 @@ cmake ../build -G<build system of your choice> -DCMAKE_BUILD_TYPE=Release
 
 # Usage
 To use this library, simply:
-\#include <shm>
+```cpp
+#include <shm>
+```
 
 When compiling your code that uses it, link with -lshm.  On 
 Linux you'll have to compile with the -lrt, -lpthread and 
@@ -42,9 +44,3 @@ Linux you'll have to compile with the -lrt, -lpthread and
 the future I might add a flag to compile without the NUMA
 features so that you can use the library without having 
 to install libnuma.
-
-# Parting Thoughts
-Hopefully everything will work well....there are fairly good comments
-if you're interested in the SHM header file under /include.
-
-
