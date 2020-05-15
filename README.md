@@ -21,25 +21,22 @@ request and I'll get it fixed ASAP.
 # Compilation Notes
 To build this library on OS X you'll need to run:
 ```bash
-glibtoolize
-aclocal
-autoconf
-automake --add-missing
-make
-make check
-sudo make intall
+mkdir build
+cd build
+cmake ../build -G<build system of your choice> -DCMAKE_BUILD_TYPE=Release
+[make | ninja]
+[make | ninja] test
 ```
-The only changes for linux will be libtoolize for 
-call to libtool instead of glibtoolize...on OS X
-the binary might be named differently depending 
-on how you've installed it so your mileage may 
-vary.  If you're advanced enough to install libtool
-on OS X you should be able to figure this out.
+
+# Install
+* Just run ```[make | ninja] install```
 
 
 # Usage
 To use this library, simply:
-\#include <shm>
+```cpp
+#include <shm>
+```
 
 When compiling your code that uses it, link with -lshm.  On 
 Linux you'll have to compile with the -lrt, -lpthread and 
@@ -47,9 +44,3 @@ Linux you'll have to compile with the -lrt, -lpthread and
 the future I might add a flag to compile without the NUMA
 features so that you can use the library without having 
 to install libnuma.
-
-# Parting Thoughts
-Hopefully everything will work well....there are fairly good comments
-if you're interested in the SHM header file under /include.
-
-
