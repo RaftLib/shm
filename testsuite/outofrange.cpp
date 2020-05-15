@@ -38,6 +38,11 @@ main( int argc, char **argv )
    catch( bad_shm_alloc ex )
    {
       /** this is where we wanted to end up **/
+      shm::close( key, 
+                  reinterpret_cast<void**>( &ptr), 
+                  0x1000,
+                  true,
+                  true );
       std::cerr << ex.what() << "\n";
       exit( EXIT_SUCCESS );
    }
