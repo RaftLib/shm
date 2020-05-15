@@ -335,20 +335,13 @@ shm::close( const std::string &key,
       {
          switch( errno )
          {
-            std::perror( "something happened" );
             case( ENOENT ):
             {
                throw invalid_key_exception( "File descriptor to unlink does not exist!" );
             }
             default:
             {
-               std::stringstream ss;
-               ss << "/dev/shm/" << key;
-               std::cout << ss.str() << "\n";
-               //if( unlink( ss.str().c_str() ) != 0 )
-               //{
-               //    throw invalid_key_exception( "Undefined error, check error codes" );
-               //}
+                throw invalid_key_exception( "Undefined error, check error codes" );
             }
          }
       }

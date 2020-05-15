@@ -70,7 +70,8 @@ find_library( NUMA_LIBRARY
 if( NUMA_LIBRARY )
     set( CMAKE_NUMA_LIBS ${NUMA_LIBRARY} )
     set( NUMA_TESTS 
-            pagemigrate )
+            #pagemigrate 
+            )
 else()
     set( CMAKE_NUMA_LIBS "" )
 endif()
