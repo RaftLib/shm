@@ -27,17 +27,25 @@
 int
 main( int argc, char **argv )
 {
-   const auto key_length( 32 );
+   //os x has a limited range on file names, 32 char including null
+   const auto key_length( 31 );
    std::string key;
    shm::genkey( key, key_length );
    std::int32_t *ptr( nullptr );
    try
    {
+      //try to allocate too much memory
       ptr = reinterpret_cast< std::int32_t* >( shm::init( key, std::numeric_limits<std::uint64_t>::max() ) );
    }
    catch( bad_shm_alloc ex )
    {
+      ptr = nullptr;
       /** this is where we wanted to end up **/
+      shm::close( key, 
+                  reinterpret_cast<void**>( &ptr), 
+                  0x1000,
+                  false,
+                  true );
       std::cerr << ex.what() << "\n";
       exit( EXIT_SUCCESS );
    }

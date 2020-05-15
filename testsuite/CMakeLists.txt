@@ -69,6 +69,8 @@ find_library( NUMA_LIBRARY
               /opt/local/lib )
 if( NUMA_LIBRARY )
     set( CMAKE_NUMA_LIBS ${NUMA_LIBRARY} )
+    set( NUMA_TESTS 
+            pagemigrate )
 else()
     set( CMAKE_NUMA_LIBS "" )
 endif()
@@ -86,6 +88,7 @@ set( TESTAPPS   alloc
                 zerobytes
                 zerokeylength 
                 tworandomkeys 
+                ${NUMA_TESTS}
                  )
 
 include_directories( ${CMAKE_SOURCE_DIR}/include )
