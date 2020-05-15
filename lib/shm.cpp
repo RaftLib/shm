@@ -1,4 +1,4 @@
-/**
+/*
  * shm.cpp - 
  * Copyright 2014 Jonathan Beard
  * 
@@ -331,16 +331,25 @@ shm::close( const std::string &key,
    }
    if( unlink )
    {
-      if( shm_unlink( key.c_str() ) != shm::success )
+      if( shm_unlink( key.c_str() ) != 0 )
       {
          switch( errno )
          {
+            std::perror( "something happened" );
             case( ENOENT ):
             {
                throw invalid_key_exception( "File descriptor to unlink does not exist!" );
             }
             default:
-               throw invalid_key_exception( "Undefined error, check error codes" );
+            {
+               std::stringstream ss;
+               ss << "/dev/shm/" << key;
+               std::cout << ss.str() << "\n";
+               //if( unlink( ss.str().c_str() ) != 0 )
+               //{
+               //    throw invalid_key_exception( "Undefined error, check error codes" );
+               //}
+            }
          }
       }
    }
