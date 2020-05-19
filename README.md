@@ -10,7 +10,7 @@ code on OS X and Linux, but as usual your mileage may vary
 greatly.
 
 # Build Status
-[![Build Status](https://travis-ci.org/RaftLib/shm.svg?branch=master)](https://travis-ci.org/RaftLib/shm)
+![CI](https://github.com/RaftLib/shm/workflows/CI/badge.svg)
 
 # Important Notes
 So I've checked the functions found in the testsuite.  I've
