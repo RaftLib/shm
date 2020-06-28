@@ -51,7 +51,7 @@ endif( NUMA_LIBRARY AND NUMA_INCLUDE_DIRS )
 
 endif( CMAKE_HOST_UNIX )
 
-install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/shm  DESTINATION ${CMAKE_INSTALL_PREFIX}/include )
+install( FILES ${PROJECT_SOURCE_DIR}/include/shm  DESTINATION ${CMAKE_INSTALL_PREFIX}/include )
 
 include_directories ( ${PROJECT_SOURCE_DIR} )
 include_directories ( ${PROJECT_SOURCE_DIR}/include )
