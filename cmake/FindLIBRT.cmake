@@ -14,9 +14,11 @@ find_library( RT_LIBRARY
               /usr/local/lib
               /opt/local/lib )
 if( RT_LIBRARY )
-    set( CMAKE_RT_LIBS "-l${RT_LIBRARY}" )
+    get_filename_component( RT_LIBRARY ${RT_LIBRARY} DIRECTORY )
+    set( CMAKE_RT_LDFLAGS "-L${RT_LIBRARY}" )
+    set( CMAKE_RT_LIB "-lrt" )
 else()
-    set( CMAKE_RT_LIBS "" )
+    set( CMAKE_RT_LIB "" )
 endif()
 mark_as_advanced( RT_LIBRARY CMAKE_RT_LIBS )
 endif()

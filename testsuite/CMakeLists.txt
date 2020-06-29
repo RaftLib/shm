@@ -17,6 +17,6 @@ include_directories( ${CMAKE_SOURCE_DIR}/include )
 
 foreach( APP ${TESTAPPS} )
     add_executable( ${APP} "${APP}.cpp" )
-    target_link_libraries( ${APP} shm ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_RT_LIBS} ${CMAKE_NUMA_LIBS} )
+    target_link_libraries( ${APP} shm ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_RT_LIB} ${CMAKE_NUMA_LIB} )
     add_test( NAME "${APP}_test" COMMAND ${APP} )
 endforeach( APP ${TESTAPPS} )

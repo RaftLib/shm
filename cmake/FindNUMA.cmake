@@ -18,7 +18,7 @@ find_path(  NUMA_INCLUDE_DIRS
               /opt/local/lib )
 
 if( NUMA_LIBRARY AND NUMA_INCLUDE_DIRS )
-    ##FIXME 
+    get_filename_component( NUMA_LIBRARY ${NUMA_LIBRARY} DIRECTORY )
     set( CMAKE_NUMA_LDFLAGS "-L${NUMA_LIBRARY}" )
     set( CMAKE_NUMA_LIB "-lnuma" )
     add_definitions( "-DPLATFORM_HAS_NUMA=1" )
