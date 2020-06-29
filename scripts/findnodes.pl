@@ -2,15 +2,10 @@
 use strict;
 use warnings;
 
-##
-# added __linux check since well, this only works
-# for systems with /proc fs. Need to check Win
-# for NUMA control. Mac OS doesn't give find grained
-# NUMA control even for the few of their systems that
-# have it...
-# TODO, check for hetereogeneous mem controls
-##
-if( defined $ENV{ "__linux" } )
+my $os = `uname`;
+chomp( $os );
+$os = lc( $os );
+if( $os eq "linux" )
 {
     my $cmdstr =  "grep -oP \"(?<=Node\\s)\\d\" /proc/zoneinfo";
     my $nodelist = `$cmdstr`;
@@ -25,8 +20,9 @@ if( defined $ENV{ "__linux" } )
             exit( 0 );
         }
     }
-    `touch foo`;
-    exit( 0 );
 }
+##
+# else 
+##
 print( "0" );
 exit( 0 );
