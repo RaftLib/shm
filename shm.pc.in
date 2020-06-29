@@ -7,6 +7,6 @@ Description: C++ wrappers for POSIX shared memory
 Version: 1.0 
 Requires: 
 Conflicts: 
-Libs:  -L${libdir} @CMAKE_RT_LDFLAGS@ @CMAKE_NUMA_LDFLAGS@ @CMAKE_RT_LIB@ @CMAKE_NUMA_LIB@
+Libs:  -L${libdir} -lshm @CMAKE_RT_LDFLAGS@ @CMAKE_NUMA_LDFLAGS@ @CMAKE_RT_LIB@ @CMAKE_NUMA_LIB@
 Libs.private: 
 Cflags: -I${includedir}

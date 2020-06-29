@@ -2,8 +2,11 @@ cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 project(shm)
 set( version 1.1 )
 set( CMAKE_INCLUDE_CURRENT_DIR ON )
-list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
-
+##
+# for submodules, this needs to be reset to avoid
+# preferencing parent module paths.
+##
+set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 find_package( NUMA )
 find_package( Threads )
 find_package( LIBRT )
