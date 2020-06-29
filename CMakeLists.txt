@@ -2,54 +2,12 @@ cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 project(shm)
 set( version 1.1 )
 set( CMAKE_INCLUDE_CURRENT_DIR ON )
+list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
-
-
-##
-# at this point we just need a warning
-##
-if( CMAKE_HOST_UNIX )
-find_library( NUMA_LIBRARY
-              NAMES numa
-              PATHS
-              ${CMAKE_LIBRARY_PATH}
-              $ENV{NUMA_PATH}/lib
-              /usr/lib
-              /usr/local/lib
-              /opt/local/lib )
-
-find_path(  NUMA_INCLUDE_DIRS
-            NAME numaif.h
-            PATHS
-              ${CMAKE_LIBRARY_PATH}$
-              $ENV{NUMA_PATH}/lib$
-              /usr/lib$
-              /usr/local/lib$
-              /opt/local/lib )
-
-if( NUMA_LIBRARY AND NUMA_INCLUDE_DIRS )
-    set( CMAKE_NUMA_LIBS ${NUMA_LIBRARY} )
-    add_definitions( "-DPLATFORM_HAS_NUMA=1" )
-    include_directories( ${NUMA_INCLUDE_DIRS} )
-else( NUMA_LIBRARY AND NUMA_INCLUDE_DIRS )
-##
-# get machine type
-##
-    execute_process( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
-    execute_process( COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/findnodes.pl
-                     COMMAND tr -d '\n' 
-                     OUTPUT_VARIABLE HASNUMA )
-    if( HASNUMA EQUAL 0 )
-        ## no NUMA
-        message( STATUS "no NUMA needed" )
-        add_definitions( "-DPLATFORM_HAS_NUMA=0" )
-    else( HASNUMA EQUAL 0 )
-        ## needs NUMA but we don't have it
-        message( FATAL_ERROR "You are compiling on a NUMA system, you must install libnuma" )
-    endif( HASNUMA EQUAL 0 )
-endif( NUMA_LIBRARY AND NUMA_INCLUDE_DIRS )
-
-endif( CMAKE_HOST_UNIX )
+find_package( NUMA )
+find_package( Threads )
+find_package( LIBRT )
+include( CheckSTD )
 
 install( FILES ${PROJECT_SOURCE_DIR}/include/shm  DESTINATION ${CMAKE_INSTALL_PREFIX}/include )
 
@@ -58,9 +16,43 @@ include_directories ( ${PROJECT_SOURCE_DIR}/include )
 
 add_subdirectory( lib )
 
+if( NOT WIN32 )
+##
+# make and setup pkg-config
+##
+mark_as_advanced( PKG_CONFIG_PATHWAY )
+set( PKG_CONFIG_PATH "" CACHE STRING "Set the pkg-config path, othwerwise will figure out" )
+if( NOT PKG_CONFIG_PATH )
+execute_process( COMMAND  pkg-config --variable pc_path pkg-config 
+                 COMMAND  tr ':' '\n' 
+                 COMMAND  head -n 1
+                 OUTPUT_VARIABLE LOCAL_PKG_CONFIG_PATHWAY )
+set( PKG_CONFIG_PATH ${LOCAL_PKG_CONFIG_PATHWAY} )
+endif()
+
+string(REPLACE ":" ";" PREFIX_LIST "${CMAKE_SYSTEM_PREFIX_PATH}")
+list(FIND PREFIX_LIST ${CMAKE_INSTALL_PREFIX}  _index)
+
+if(${_index} GREATER 0)
+    file( MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/pkgconfig ) 
+    set( PKG_CONFIG_PATH ${CMAKE_INSTALL_PREFIX}/pkgconfig )
+    message( WARNING "You should set ${RED}PKG_CONFIG_PATH=${CMAKE_INSTALL_PREFIX}/pkgconfig/:$PKG_CONFIG_PATH ${ColourReset} when installing to non-standard prefix for pkg-config to work correctly!" )
+else()
+    message( STATUS "Setting PKG_CONFIG_PATH to: ${PKG_CONFIG_PATH}" )
+endif()
+
+
+
+configure_file( "shm.pc.in" "shm.pc" @ONLY )
+install( FILES ${CMAKE_CURRENT_BINARY_DIR}/shm.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/pkgconfig/ )
+
+##
+# BUILD Tests
+##
 mark_as_advanced( BUILD_TESTS )
 set( BUILD_TESTS trrue CACHE BOOL "Tests build target available if true" )
 if( BUILD_TESTS )
     enable_testing()
     add_subdirectory( testsuite )
+endif()
 endif()
