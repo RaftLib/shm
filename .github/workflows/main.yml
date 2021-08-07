@@ -30,20 +30,21 @@ jobs:
       run: ctest -C Release
       working-directory: "${{ github.workspace }}/../../_temp/linux"
   
+        
   MacOS:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-      
+    - uses: actions/checkout@main
     - name: 'Run CMake'
-      uses: lukka/run-cmake@v2
+      uses: lukka/run-cmake@main
       with:
         cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
         cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
         cmakeBuildType: Release  
         buildDirectory: "${{ github.workspace }}/../../_temp/macos"
         buildWithCMake: true
-        buildWithCMakeArgs: --config Release  
+        cmakeAppendedArgs: -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/../../_temp/macos/install"
+        buildWithCMakeArgs: --config Release
         
     - name: 'Run CTest'
       run: ctest -C Release
