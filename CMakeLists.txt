@@ -30,6 +30,7 @@ execute_process( COMMAND  pkg-config --variable pc_path pkg-config
                  COMMAND  tr ':' '\n' 
                  COMMAND  head -n 1
                  OUTPUT_VARIABLE LOCAL_PKG_CONFIG_PATHWAY )
+string(REGEX REPLACE "\n$" "" LOCAL_PKG_CONFIG_PATHWAY "${LOCAL_PKG_CONFIG_PATHWAY}")
 set( PKG_CONFIG_PATH ${LOCAL_PKG_CONFIG_PATHWAY} )
 endif()
 
@@ -39,7 +40,7 @@ list(FIND PREFIX_LIST ${CMAKE_INSTALL_PREFIX}  _index)
 if(${_index} GREATER 0)
     file( MAKE_DIRECTORY ${CMAKE_INSTALL_PREFIX}/pkgconfig ) 
     set( PKG_CONFIG_PATH ${CMAKE_INSTALL_PREFIX}/pkgconfig )
-    message( WARNING "You should set ${RED}PKG_CONFIG_PATH=${CMAKE_INSTALL_PREFIX}/pkgconfig/:$PKG_CONFIG_PATH ${ColourReset} when installing to non-standard prefix for pkg-config to work correctly!" )
+    message( WARNING "You should set PKG_CONFIG_PATH=${CMAKE_INSTALL_PREFIX}/pkgconfig/:$PKG_CONFIG_PATH when installing to non-standard prefix for pkg-config to work correctly!" )
 else()
     message( STATUS "Setting PKG_CONFIG_PATH to: ${PKG_CONFIG_PATH}" )
 endif()
@@ -47,7 +48,7 @@ endif()
 
 
 configure_file( "shm.pc.in" "shm.pc" @ONLY )
-install( FILES ${CMAKE_CURRENT_BINARY_DIR}/shm.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/pkgconfig/ )
+install( FILES ${CMAKE_CURRENT_BINARY_DIR}/shm.pc DESTINATION  ${PKG_CONFIG_PATH} )
 
 ##
 # BUILD Tests
