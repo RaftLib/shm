@@ -12,12 +12,17 @@ find_package( Threads )
 find_package( LIBRT )
 include( CheckSTD )
 
-install( FILES ${PROJECT_SOURCE_DIR}/include/shm  DESTINATION ${CMAKE_INSTALL_PREFIX}/include )
 
-include_directories ( ${PROJECT_SOURCE_DIR} )
+
+
+add_subdirectory( include )
+
+include_directories ( ${PROJECT_BINARY_DIR}/include )
 include_directories ( ${PROJECT_SOURCE_DIR}/include )
 
 add_subdirectory( lib )
+
+
 
 if( NOT WIN32 )
 ##
@@ -48,7 +53,7 @@ endif()
 
 
 configure_file( "shm.pc.in" "shm.pc" @ONLY )
-install( FILES ${CMAKE_CURRENT_BINARY_DIR}/shm.pc DESTINATION  ${PKG_CONFIG_PATH} )
+install( FILES ${PROJECT_BINARY_DIR}/shm.pc DESTINATION  ${PKG_CONFIG_PATH} )
 
 ##
 # BUILD Tests

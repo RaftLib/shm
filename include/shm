@@ -1,7 +1,7 @@
 // vim: set filetype=cpp:
 /**
  * shm.hpp - 
- * Copyright 2014 Jonathan Beard
+ * Copyright 2021 Jonathan Beard
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * @author: Jonathan Beard
- * @version: Thu Aug  1 14:26:34 2013
+ * @version: Aug 27 2021
  */
 #ifndef _SHM_HPP_
 #define _SHM_HPP_  1
@@ -24,7 +24,8 @@
 #include <utility>
 #include <exception>
 #include <string>
-
+//platform specific definitions
+#include "shm_module.hpp"
 
 class SHMException : public std::exception
 {
