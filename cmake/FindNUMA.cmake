@@ -11,16 +11,20 @@ find_library( NUMA_LIBRARY
 find_path(  NUMA_INCLUDE_DIRS
             NAME numaif.h
             PATHS
-              ${CMAKE_LIBRARY_PATH}$
-              $ENV{NUMA_PATH}/lib$
-              /usr/lib$
-              /usr/local/lib$
-              /opt/local/lib )
+              ${CMAKE_INCLUDE_PATH}$
+              $ENV{NUMA_PATH}/include
+              /usr/include
+              /usr/local/include
+              /opt/local/include )
 
 if( NUMA_LIBRARY AND NUMA_INCLUDE_DIRS )
     set( CMAKE_NUMA_LIBS ${NUMA_LIBRARY} )
-    set( CMAKE_NUMA_LINK "-l${NUMA_LIBRARY}" )
-    set( CMAKE_NUMA_DEFINE "#define PLATFORM_HAS_NUMA 1" )
+    get_filename_component( DIR_NUMA_LIBRARY ${NUMA_LIBRARY} DIRECTORY )
+    set( CMAKE_NUMA_LD "-lnuma" )
+    set( CMAKE_NUMA_LDFLAGS "-L${DIR_NUMA_LIBRARY}" )
+
+    set( CMAKE_NUMA_INCLUDES "-I${NUMA_INCLUDE_DIRS}" )
+    set( CMAKE_NUMA_DEFINE "1" )
     add_definitions( "-DPLATFORM_HAS_NUMA=1" )
     include_directories( ${NUMA_INCLUDE_DIRS} )
 else( NUMA_LIBRARY AND NUMA_INCLUDE_DIRS )

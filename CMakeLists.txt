@@ -13,21 +13,16 @@ find_package( LIBRT )
 include( CheckSTD )
 
 
-##
-# run header file through pre-processor so we can 
-# set platform specific definitions before building
-# and installing.
-##
-configure_file( "${PROJECT_SOURCE_DIR}/include/shm.in" "shm" @ONLY )
-install( FILES ${CMAKE_CURRENT_BINARY_DIR}/shm  DESTINATION ${CMAKE_INSTALL_PREFIX}/include )
 
 
+add_subdirectory( include )
 
-include_directories ( ${CMAKE_CURRENT_SOURCE_DIR} )
+include_directories ( ${PROJECT_BINARY_DIR}/include )
+include_directories ( ${PROJECT_SOURCE_DIR}/include )
 
 add_subdirectory( lib )
 
-include_directories ( ${CMAKE_CURRENT_BINARY_DIR} )
+
 
 if( NOT WIN32 )
 ##
@@ -58,7 +53,7 @@ endif()
 
 
 configure_file( "shm.pc.in" "shm.pc" @ONLY )
-install( FILES ${CMAKE_CURRENT_BINARY_DIR}/shm.pc DESTINATION  ${PKG_CONFIG_PATH} )
+install( FILES ${PROJECT_BINARY_DIR}/shm.pc DESTINATION  ${PKG_CONFIG_PATH} )
 
 ##
 # BUILD Tests

@@ -24,8 +24,8 @@
 #include <utility>
 #include <exception>
 #include <string>
-
-@CMAKE_NUMA_DEFINE@
+//platform specific definitions
+#include "shm_module.hpp"
 
 class SHMException : public std::exception
 {
