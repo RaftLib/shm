@@ -1,6 +1,6 @@
 /*
  * shm.cpp - 
- * Copyright 2014 Jonathan Beard
+ * Copyright 2021 Jonathan Beard
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  * @author: Jonathan Beard
- * @version: Thu Aug  1 14:26:34 2013
+ * @version: September 7 2021
  */
 #include <shm>
 #include <fcntl.h>
@@ -27,7 +27,6 @@
 #endif
 #include <sched.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
@@ -136,7 +135,6 @@ shm::init( const std::string &key,
     const std::int32_t flags( O_RDWR | O_CREAT | O_EXCL );
     /* set read/write by user */
     const mode_t mode( S_IWUSR | S_IRUSR );
-    errno = shm::success;
     fd  = shm_open( key.c_str(), 
                     flags, 
                     mode );
@@ -178,7 +176,6 @@ shm::init( const std::string &key,
              static_cast< float >( nbytes) / 
             static_cast< float >( page_size ) ) + 1 ) * page_size 
     );
-    errno = shm::success;
     if( ftruncate( fd, alloc_bytes ) != shm::success )
     {
        std::stringstream ss;
@@ -193,7 +190,6 @@ shm::init( const std::string &key,
      * user has no idea so we'll re-calc this at the  end
      * when we unmap the data.
      */
-    errno = shm::success;
     void *out( nullptr );
 
     /** 
@@ -253,7 +249,6 @@ shm::open( const std::string &key )
    int fd( shm::failure );
    const int flags( O_RDWR | O_CREAT );
    mode_t mode( 0 );
-   errno = success;
    fd = shm_open( key.c_str(), 
                   flags, 
                   mode ); 
@@ -278,7 +273,6 @@ shm::open( const std::string &key )
       throw bad_shm_alloc( ss.str() );
    }
    void *out( nullptr );
-   errno = shm::success;
    out = mmap( nullptr, 
                st.st_size, 
                (PROT_READ | PROT_WRITE), 
@@ -320,7 +314,6 @@ shm::close( const std::string &key,
                static_cast< float >( nbytes ) / 
               static_cast< float >( page_size ) ) + 1 ) * page_size 
       );
-      errno = shm::success;
       if( ( *ptr != nullptr ) && ( munmap( *ptr, alloc_bytes ) != shm::success ) )
       {
 #if DEBUG   
