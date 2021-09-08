@@ -27,6 +27,12 @@
 //platform specific definitions
 #include "shm_module.hpp"
 
+#ifndef USE_CPP_EXCEPTIONS
+#define USE_CPP_EXCEPTIONS 1
+#endif
+
+
+#if USE_CPP_EXCEPTIONS==1
 class SHMException : public std::exception
 {
 public:
@@ -51,7 +57,7 @@ using bad_shm_alloc                      = TemplateSHMException< __COUNTER__ >;
 using shm_already_exists                 = TemplateSHMException< __COUNTER__ >;
 using page_alignment_exception           = TemplateSHMException< __COUNTER__ >;
 using invalid_key_exception              = TemplateSHMException< __COUNTER__ >;
-
+#endif
 
 class shm{
 public:
@@ -68,7 +74,7 @@ public:
     * @param   key - std::string&
     * @param   length - const std::size_t
     */
-   static void genkey( std::string &key, const std::size_t length );
+   static void genkey( std::string &key, std::size_t length );
 
    /**
     * init - initialize SHM segment with file descriptor

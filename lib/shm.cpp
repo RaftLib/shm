@@ -57,6 +57,7 @@
 
 #endif
 
+#if USE_CPP_EXCEPTIONS==1
 SHMException::SHMException( const std::string &message ) : std::exception(),
                                                            message( message )
 {
@@ -71,20 +72,29 @@ SHMException::what() const noexcept
 {
     return( message.c_str() );
 };
+#endif
 
 void
 shm::genkey( std::string &key, 
-             const std::size_t length )
+             std::size_t length )
 {
    if( length == 0 )
    {
+#if USE_CPP_EXCEPTIONS==1 
       throw invalid_key_exception( "Key length must be longer than zero!" );   
+#else
+      key = "";
+#endif
    }
    else if ( length > NAME_MAX )
    {
+#if USE_CPP_EXCEPTIONS==1
       std::stringstream errstream;
       errstream << "Key length must be less than " << NAME_MAX << " characters, exiting!";
-      throw invalid_key_exception( errstream.str() );   
+      throw invalid_key_exception( errstream.str() );  
+#else
+      length = NAME_MAX;
+#endif
    }
    using key_t = std::uint32_t;
    FILE *fp = std::fopen("/dev/urandom","r");
@@ -99,13 +109,19 @@ shm::genkey( std::string &key,
    if( array == nullptr )
    {
       fclose( fp );
+#if USE_CPP_EXCEPTIONS==1      
       throw bad_shm_alloc( "failed to allocate array for initalizing integers" );
+#else
+      return;
+#endif
    }
    if( std::fread( array, sizeof( std::uint8_t ), length, fp ) != length )
    {
       fclose( fp );
       free( array );
+#if USE_CPP_EXCEPTIONS==1      
       throw bad_shm_alloc( "failed to read enough integers to satisfy key length" );
+#endif   
    }
    std::stringstream ss;
    for( auto i( 0 ); i < length; i++ )
@@ -127,7 +143,11 @@ shm::init( const std::string &key,
 {
     if( nbytes == 0 )
     {
+#if USE_CPP_EXCEPTIONS==1      
        throw bad_shm_alloc( "nbytes cannot be zero when allocating memory!" );
+#else
+        return( nullptr );
+#endif
     }
     int fd( shm::failure  );
     
@@ -140,19 +160,28 @@ shm::init( const std::string &key,
                     mode );
     if( fd == failure )
     {
+#if USE_CPP_EXCEPTIONS==1      
         std::stringstream ss;
+#endif
         if( errno == EEXIST )
         {
+#if USE_CPP_EXCEPTIONS==1      
             ss << "SHM Handle already exists \"" << key << "\" already exists, please use open\n";
             throw shm_already_exists( ss.str() );
+#else            
+            return( -1 );
+#endif            
         }
         else 
         {
+#if USE_CPP_EXCEPTIONS==1      
             ss << "Failed to open shm with file descriptor \"" << 
                key << "\", error code returned: ";
             ss << std::strerror( errno );
             throw bad_shm_alloc( ss.str() ); 
-                
+#else
+            return( nullptr );
+#endif
         }
     }
     
@@ -162,10 +191,16 @@ shm::init( const std::string &key,
     const auto total_possible_bytes( num_phys_pages * page_size );
     if( nbytes > total_possible_bytes )
     {
+    
+#if USE_CPP_EXCEPTIONS==1      
          std::stringstream errstr;
          errstr << "You've tried to allocate too many bytes (" << nbytes << "),"
              << " the total possible is (" << total_possible_bytes << ")\n";
          throw bad_shm_alloc( errstr.str() ); 
+#else
+         //errno should be set (hopefully)
+         return( nullptr );
+#endif
     }
     /* else begin truncate */
     /* else begin mmap */
@@ -178,12 +213,17 @@ shm::init( const std::string &key,
     );
     if( ftruncate( fd, alloc_bytes ) != shm::success )
     {
+#if USE_CPP_EXCEPTIONS==1      
        std::stringstream ss;
        ss << "Failed to truncate shm for file descriptor (" << fd << ") ";
        ss << "with number of bytes (" << nbytes << ").  Error code returned: ";
        ss << std::strerror( errno );
        shm_unlink( key.c_str() );
        throw bad_shm_alloc( ss.str() );
+#else
+       shm_unlink( key.c_str() );
+       return( nullptr );
+#endif
     }
     /** 
      * NOTE: actual allocation size should be alloc_bytes,
@@ -216,11 +256,16 @@ shm::init( const std::string &key,
                 0 );
     if( out == MAP_FAILED )
     {
+#if USE_CPP_EXCEPTIONS==1      
        std::stringstream ss;
        ss << "Failed to mmap shm region with the following error: " << 
          std::strerror( errno ) << ",\n" << "unlinking.";
        shm_unlink( key.c_str() );
        throw bad_shm_alloc( ss.str() );
+#else
+       shm_unlink( key.c_str() );
+       return( nullptr );
+#endif
     }
     /** mmap should theoretically return start of page **/
     assert( reinterpret_cast< std::uintptr_t >( out ) % page_size == 0 );
@@ -254,10 +299,14 @@ shm::open( const std::string &key )
                   mode ); 
    if( fd == failure )
    {
+#if USE_CPP_EXCEPTIONS==1      
       std::stringstream ss;
       ss << "Failed to open shm with key \"" << key << "\", with the following error code: ";
       ss << std::strerror( errno ); 
       throw bad_shm_alloc( ss.str() );
+#else
+        return( nullptr );
+#endif
    }
    struct stat st;
    std::memset( &st, 
@@ -266,11 +315,16 @@ shm::open( const std::string &key )
    /* stat the file to get the size */
    if( fstat( fd, &st ) != shm::success )
    {
+#if USE_CPP_EXCEPTIONS==1      
       std::stringstream ss;
       ss << "Failed to stat shm region with the following error: " << std::strerror( errno ) << ",\n";
       ss << "unlinking.";
       shm_unlink( key.c_str() );
       throw bad_shm_alloc( ss.str() );
+#else
+      shm_unlink( key.c_str() );
+      return( nullptr );
+#endif
    }
    void *out( nullptr );
    out = mmap( nullptr, 
@@ -281,11 +335,16 @@ shm::open( const std::string &key )
                0 );
    if( out == MAP_FAILED )
    {
+#if USE_CPP_EXCEPTIONS==1      
       std::stringstream ss;
       ss << "Failed to mmap shm region with the following error: " << std::strerror( errno ) << ",\n";
       ss << "unlinking.";
       shm_unlink( key.c_str() );
       throw bad_shm_alloc( ss.str() );
+#else
+      shm_unlink( key.c_str() );
+      return( nullptr );
+#endif
    }
    /* close fd */
    ::close( fd );
@@ -326,6 +385,7 @@ shm::close( const std::string &key,
    {
       if( shm_unlink( key.c_str() ) != 0 )
       {
+#if USE_CPP_EXCEPTIONS==1      
          switch( errno )
          {
             case( ENOENT ):
@@ -337,6 +397,7 @@ shm::close( const std::string &key,
                 throw invalid_key_exception( "Undefined error, check error codes" );
             }
          }
+#endif         
       }
    }
    return( true );
