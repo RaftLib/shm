@@ -169,7 +169,7 @@ shm::init( const std::string &key,
             ss << "SHM Handle already exists \"" << key << "\" already exists, please use open\n";
             throw shm_already_exists( ss.str() );
 #else            
-            return( -1 );
+            return( (void*)-1 );
 #endif            
         }
         else 
@@ -416,10 +416,14 @@ shm::move_to_tid_numa( const pid_t thread_id,
       reinterpret_cast< std::uintptr_t >( ptr ) );
    if( (ptr_addr % page_size) != 0 )
    {
+#if USE_CPP_EXCEPTIONS==1      
       std::stringstream ss;
       ss << "Variable 'ptr' must be page aligned, currently it is(" << 
        ptr_addr % page_size << "), off please fix...exiting!!\n";
       throw page_alignment_exception( ss.str() );
+#else
+      return( false );
+#endif
    }
 
    /** check to see if NUMA avail **/

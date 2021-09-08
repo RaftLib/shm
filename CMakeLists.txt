@@ -12,6 +12,8 @@ find_package( Threads )
 find_package( LIBRT )
 include( CheckSTD )
 
+mark_as_advanced( CPP_EXCEPTIONS )
+set( CPP_EXCEPTIONS 1 CACHE BOOL "Use CPP exceptions when errors are encountered when set to 1, otherwise rely on errno" )
 
 
 
@@ -59,8 +61,8 @@ install( FILES ${PROJECT_BINARY_DIR}/shm.pc DESTINATION  ${PKG_CONFIG_PATH} )
 # BUILD Tests
 ##
 mark_as_advanced( BUILD_TESTS )
-set( BUILD_TESTS trrue CACHE BOOL "Tests build target available if true" )
-if( BUILD_TESTS )
+set( BUILD_TESTS true CACHE BOOL "Tests build target available if true" )
+if( BUILD_TESTS AND CPP_EXCEPTIONS )
     enable_testing()
     add_subdirectory( testsuite )
 endif()

@@ -27,10 +27,6 @@
 //platform specific definitions
 #include "shm_module.hpp"
 
-#ifndef USE_CPP_EXCEPTIONS
-#define USE_CPP_EXCEPTIONS 1
-#endif
-
 
 #if USE_CPP_EXCEPTIONS==1
 class SHMException : public std::exception
