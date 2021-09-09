@@ -62,7 +62,7 @@ install( FILES ${PROJECT_BINARY_DIR}/shm.pc DESTINATION  ${PKG_CONFIG_PATH} )
 ##
 mark_as_advanced( BUILD_TESTS )
 set( BUILD_TESTS true CACHE BOOL "Tests build target available if true" )
-if( BUILD_TESTS AND CPP_EXCEPTIONS )
+if( BUILD_TESTS )
     enable_testing()
     add_subdirectory( testsuite )
 endif()

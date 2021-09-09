@@ -1,5 +1,6 @@
 set( CMAKE_INCLUDE_CURRENT_DIR ON )
 
+if( CPP_EXCEPTIONS )
 set( TESTAPPS   alloc
                 doublealloc
                 close
@@ -12,7 +13,11 @@ set( TESTAPPS   alloc
                 tworandomkeys 
                 ${NUMA_TESTS}
                  )
-
+else()
+##
+# need to add idefs to all shm test cases
+##
+endif()
 include_directories( ${PROJECT_SOURCE_DIR}/include )
 
 foreach( APP ${TESTAPPS} )
