@@ -13,8 +13,9 @@ find_package( LIBRT )
 include( CheckSTD )
 
 mark_as_advanced( CPP_EXCEPTIONS )
+if( NOT DEFINED CPP_EXCEPTIONS )
 set( CPP_EXCEPTIONS 1 CACHE BOOL "Use CPP exceptions when errors are encountered when set to 1, otherwise rely on errno" )
-
+endif()
 
 
 add_subdirectory( include )
