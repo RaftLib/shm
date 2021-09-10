@@ -267,8 +267,6 @@ shm::init( const std::string &key,
        return( nullptr );
 #endif
     }
-    /** mmap should theoretically return start of page **/
-    assert( reinterpret_cast< std::uintptr_t >( out ) % page_size == 0 );
     if( zero )
     {
        /* everything theoretically went well, lets initialize to zero */
