@@ -151,6 +151,27 @@ shm::init( const std::string &key,
     }
     int fd( shm::failure  );
     
+    //stupid hack to get around platforms that are
+    //using LD_PRELOAD, e.g., dynamic binary tools
+    struct stat st;
+    std::stringstream path;
+    path << "/dev/shm/" << key.c_str();
+    if( stat( path.str().c_str(), &st ) == 0 )
+    {
+#if USE_CPP_EXCEPTIONS==1      
+        std::stringstream ss;
+#endif
+        if( errno == EEXIST )
+        {
+#if USE_CPP_EXCEPTIONS==1      
+            ss << "SHM Handle already exists \"" << key << "\" already exists, please use open\n";
+            throw shm_already_exists( ss.str() );
+#else            
+            return( (void*)-1 );
+#endif            
+        }
+    }
+    
     /* set read/write set create if not exists */
     const std::int32_t flags( O_RDWR | O_CREAT | O_EXCL );
     /* set read/write by user */
