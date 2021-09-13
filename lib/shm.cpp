@@ -161,15 +161,12 @@ shm::init( const std::string &key,
 #if USE_CPP_EXCEPTIONS==1      
         std::stringstream ss;
 #endif
-        if( errno == EEXIST )
-        {
 #if USE_CPP_EXCEPTIONS==1      
             ss << "SHM Handle already exists \"" << key << "\" already exists, please use open\n";
             throw shm_already_exists( ss.str() );
 #else            
             return( (void*)-1 );
 #endif            
-        }
     }
     
     /* set read/write set create if not exists */
