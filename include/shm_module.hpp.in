@@ -27,3 +27,8 @@
 #ifndef USE_CPP_EXCEPTIONS
 #define USE_CPP_EXCEPTIONS @CPP_EXCEPTIONS@
 #endif
+
+#if ( _USE_SYSTEMV_SHM_ == 1 )
+//for key_t type 
+#include <sys/shm.h>
+#endif

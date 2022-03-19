@@ -19,7 +19,14 @@
  */
 #include <shm>
 #include <fcntl.h>
+
+#if (_USE_POSIX_SHM_ == 1 )
 #include <sys/mman.h>
+#elif( _USE_SYSTEMV_SEM_ == 1)
+#include <sys/shm.h>
+#include <sys/ipc.h>
+#endif
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #ifndef _GNU_SOURCE
@@ -40,6 +47,7 @@
 #include <cmath>
 #include <climits>
 #include <limits>
+#include <random>
 
 #if __APPLE__
 #include <malloc/malloc.h>
@@ -74,70 +82,65 @@ SHMException::what() const noexcept
 };
 #endif
 
-void
-shm::genkey( std::string &key, 
-             std::size_t length )
-{
-   if( length == 0 )
-   {
-#if USE_CPP_EXCEPTIONS==1 
-      throw invalid_key_exception( "Key length must be longer than zero!" );   
-#else
-      key = "";
-#endif
-   }
-   else if ( length > NAME_MAX )
-   {
-#if USE_CPP_EXCEPTIONS==1
-      std::stringstream errstream;
-      errstream << "Key length must be less than " << NAME_MAX << " characters, exiting!";
-      throw invalid_key_exception( errstream.str() );  
-#else
-      length = NAME_MAX;
-#endif
-   }
-   using key_t = std::uint32_t;
-   FILE *fp = std::fopen("/dev/urandom","r");
-   if(fp == NULL)
-   {
-      const char *err = "Error, couldn't open /dev/urandom!!\n";
-      std::perror( err );
-      exit( EXIT_FAILURE );
-   }
-   static const char num[] = "0123456789";
-   std::uint8_t *array = (std::uint8_t*)malloc( sizeof( std::uint8_t ) * length );
-   if( array == nullptr )
-   {
-      fclose( fp );
-#if USE_CPP_EXCEPTIONS==1      
-      throw bad_shm_alloc( "failed to allocate array for initalizing integers" );
-#else
-      return;
-#endif
-   }
-   if( std::fread( array, sizeof( std::uint8_t ), length, fp ) != length )
-   {
-      fclose( fp );
-      free( array );
-#if USE_CPP_EXCEPTIONS==1      
-      throw bad_shm_alloc( "failed to read enough integers to satisfy key length" );
-#endif   
-   }
-   std::stringstream ss;
-   for( auto i( 0 ); i < length; i++ )
-   {
-      ss << num[ array[ i ] % (sizeof( num ) - 1 ) ];
-   }
 
-   free( array );
-   fclose( fp );
-   key = ss.str();
-   return;
+void 
+shm::generate_key( const int        max_length,
+                   const int        proj_id,
+                   shm::key_type    &key )
+{
+#if _USE_POSIX_SEM_ == 1
+    //string key
+    UNUSED( proj_id );
+    static std::random_device rd;
+    static std::mt19937 gen( rd() );
+    static std::uniform_int_distribution<> distrib( 0, std::numeric_limits< int >::max() );
+    const auto val = distrib( gen );
+    shm::key_copy( key, max_length, std::to_string( val ).c_str() );
+    return;
+#elif _USE_SYSTEMV_SEM_ == 1
+    UNUSED( max_length );
+    //integer key
+    char *path = getcwd( nullptr, 0 );
+    if( path == nullptr )
+    {
+        std::perror( "failed to get cwd, switching to guns, a.k.a. root dir (/)" );
+        key = ftok( "/", proj_id);
+    }
+    else
+    {
+        key = ftok( path, proj_id);
+    }
+    return;
+#endif
+}
+
+
+bool      
+shm::key_copy( shm::key_type           &dst_key,
+               const   std::size_t     dst_key_length, 
+               const   shM::key_type   src_key )
+{
+#if _USE_POSIX_SEM_ == 1
+    //string key
+    std::memset( dst_key, '\0', dst_key_length );
+    std::strncpy(   (char*) dst_key,
+                    src_key,
+                    dst_key_length );
+    return( true );                    
+#elif _USE_SYSTEMV_SEM_ == 1
+    UNUSED( dst_key_length );
+    //key_t key
+    dst_key = src_key;
+    return( true );
+#else
+    //not implemented
+    return( false );
+#endif
 }
 
 void*
-shm::init( const std::string &key,
-           const std::size_t nbytes,
+shm::init( const shm::key_type &key,
+           const std::size_t   nbytes,
            const bool zero   /* zero mem */,
            void   *ptr )
 {
@@ -149,8 +152,11 @@ shm::init( const std::string &key,
         return( nullptr );
 #endif
     }
-    int fd( shm::failure  );
     
+#if _USE_POSIX_SEM_ == 1
+
+
+    int fd( shm::failure  );
     //stupid hack to get around platforms that are
     //using LD_PRELOAD, e.g., dynamic binary tools
     struct stat st;
@@ -285,6 +291,15 @@ shm::init( const std::string &key,
        return( nullptr );
 #endif
     }
+/**
+ * ###### END POSIX SECTION ######
+ */
+#elif _USE_SYSTEMV_SEM_ == 1
+/**
+ * ###### START SYSTEM-V SECTION  ######
+ */
+
+    
     if( zero )
     {
        /* everything theoretically went well, lets initialize to zero */
@@ -301,6 +316,8 @@ shm::init( const std::string &key,
    }
    return( out );
 }
+
+
 
 void*
 shm::open( const std::string &key )
