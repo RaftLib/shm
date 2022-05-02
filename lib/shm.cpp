@@ -69,6 +69,16 @@
 
 #endif
 
+
+#ifndef UNUSED 
+#ifdef __clang__
+#define UNUSED( x ) (void)(x)
+#else
+#define UNUSED( x )[&x]{}()
+#endif
+//FIXME need to double check to see IF THIS WORKS ON MSVC
+#endif
+
 #if USE_CPP_EXCEPTIONS==1
 SHMException::SHMException( const std::string &message ) : std::exception(),
                                                            message( message )

@@ -29,6 +29,8 @@
 
 
 
+
+
 #if USE_CPP_EXCEPTIONS==1
 class SHMException : public std::exception
 {
