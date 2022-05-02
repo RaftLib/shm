@@ -33,11 +33,15 @@ set( USE_SYSV_SHM 0 CACHE BOOL "Use SYSV shared memory vs. System V (this is NOT
 endif()
 
 
+
+
 if( USE_POSIX_SHM )
 message( STATUS "Using POSIX SHM interface" )
+set( USE_SYSV_SHM 0 ) 
 add_definitions( "-D_USE_POSIX_SHM_=1" )
 elseif( USE_SYSV_SHM )
 message( STATUS "Using SystemV SHM interface" )
+set( USE_POSIX_SHM 0 )
 add_definitions( "-D_USE_SYSTEMV_SHM_=1" )
 endif()
 

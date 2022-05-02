@@ -19,8 +19,12 @@
  * @version: Aug 27 2021
  */
 
+
+#ifndef SHM_MODULE_INCLUDE
+#define SHM_MODULE_INCLUDE 1
+
 #ifndef PLATFORM_HAS_NUMA
-#define PLATFORM_HAS_NUMA @CMAKE_NUMA_DEFINE@
+@CMAKE_NUMA_DEFINE@
 #endif
 
 
@@ -28,21 +32,34 @@
 #define USE_CPP_EXCEPTIONS @CPP_EXCEPTIONS@
 #endif
 
-#if ( _USE_SYSTEMV_SHM_ == 1 )
+#if (@USE_SYSV_SHM@ == 1)
+
 //for key_t type 
 #include <sys/shm.h>
-#elif (_USE_POSIX_SHM_ == 1)
+using shm_key_t = key_t; 
+
+#ifndef _USE_SYSTEMV_SHM_ 
+#define _USE_SYSTEMV_SHM_ 1
+#endif
+
+#ifndef _USE_POSIX_SHM_
+#define _USE_POSIX_SHM_ 0
+#endif
+
+#elif (@USE_POSIX_SHM@ == 1)
 static constexpr auto shm_key_length = 24;
+
+using shm_key_t = char[ shm_key_length ];
+
+#ifndef _USE_SYSTEMV_SHM_ 
+#define _USE_SYSTEMV_SHM_ 0
+#endif
+
+#ifndef _USE_POSIX_SHM_
+#define _USE_POSIX_SHM_ 1
 #endif
 
 
-using shm_key_t
-    =
-#if (_USE_POSIX_SHM_ == 1) 
-        char[ shm_key_length ]
-#elif (_USE_SYSTEMV_SHM_ == 1)
-        key_t
-#else
-#warning( "either SHM or POSIX must be specified, check configuration!" )
-#endif
-;
+#endif /** end POSIX vs. SystemV interface selection **/
+
+#endif /** END MODULE INCLUDE **/
