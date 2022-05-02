@@ -19,10 +19,13 @@
  */
 #include <shm>
 #include <fcntl.h>
-
-#if (_USE_POSIX_SHM_ == 1 )
+/**
+ * this is needed for mprotect on both the POSIX
+ * and SystemV implementations 
+ */
 #include <sys/mman.h>
-#elif( _USE_SYSTEMV_SEM_ == 1)
+
+#if( _USE_SYSTEMV_SHM_ == 1)
 #include <sys/shm.h>
 #include <sys/ipc.h>
 #endif
@@ -48,6 +51,7 @@
 #include <climits>
 #include <limits>
 #include <random>
+#include <functional>
 
 #if __APPLE__
 #include <malloc/malloc.h>
@@ -84,21 +88,28 @@ SHMException::what() const noexcept
 
 
 void 
-shm::generate_key( const int        max_length,
-                   const int        proj_id,
-                   shm::key_type    &key )
+shm::gen_key( shm_key_t &key, const int proj_id )
 {
-#if _USE_POSIX_SEM_ == 1
+#if _USE_POSIX_SHM_ == 1
     //string key
     UNUSED( proj_id );
     static std::random_device rd;
     static std::mt19937 gen( rd() );
     static std::uniform_int_distribution<> distrib( 0, std::numeric_limits< int >::max() );
     const auto val = distrib( gen );
-    shm::key_copy( key, max_length, std::to_string( val ).c_str() );
+    shm_key_t val_key;
+    std::memset(    val_key, 
+                    '\0', 
+                    shm_key_length );
+
+    std::snprintf( val_key, 
+                   shm_key_length,
+                   "%d",
+                   val );
+
+    shm::key_copy( key, val_key );
     return;
-#elif _USE_SYSTEMV_SEM_ == 1
-    UNUSED( max_length );
+#elif _USE_SYSTEMV_SHM_ == 1
     //integer key
     char *path = getcwd( nullptr, 0 );
     if( path == nullptr )
@@ -116,20 +127,17 @@ shm::generate_key( const int        max_length,
 
 
 bool      
-shm::key_copy( shm::key_type           &dst_key,
-               const   std::size_t     dst_key_length, 
-               const   shM::key_type   src_key )
+shm::key_copy( shm_key_t               &dst_key,
+               const   shm_key_t        src_key )
 {
-#if _USE_POSIX_SEM_ == 1
+#if _USE_POSIX_SHM_ == 1
     //string key
-    std::memset( dst_key, '\0', dst_key_length );
+    std::memset( dst_key, '\0', shm_key_length );
     std::strncpy(   (char*) dst_key,
                     src_key,
-                    dst_key_length );
+                    shm_key_length );
     return( true );                    
-#elif _USE_SYSTEMV_SEM_ == 1
-    UNUSED( dst_key_length );
-    //key_t key
+#elif _USE_SYSTEMV_SHM_ == 1
     dst_key = src_key;
     return( true );
 #else
@@ -139,50 +147,12 @@ shm::key_copy( shm::key_type           &dst_key,
 }
 
 void*
-shm::init( const shm::key_type &key,
+shm::init( const shm_key_t     &key,
            const std::size_t   nbytes,
            const bool zero   /* zero mem */,
            void   *ptr )
 {
-    if( nbytes == 0 )
-    {
-#if USE_CPP_EXCEPTIONS==1      
-       throw bad_shm_alloc( "nbytes cannot be zero when allocating memory!" );
-#else
-        return( nullptr );
-#endif
-    }
-    
-#if _USE_POSIX_SEM_ == 1
-
-
-    int fd( shm::failure  );
-    //stupid hack to get around platforms that are
-    //using LD_PRELOAD, e.g., dynamic binary tools
-    struct stat st;
-    std::stringstream path;
-    path << "/dev/shm/" << key.c_str();
-    if( stat( path.str().c_str(), &st ) == 0 )
-    {
-#if USE_CPP_EXCEPTIONS==1      
-        std::stringstream ss;
-#endif
-#if USE_CPP_EXCEPTIONS==1      
-            ss << "SHM Handle already exists \"" << key << "\" already exists, please use open\n";
-            throw shm_already_exists( ss.str() );
-#else            
-            return( (void*)-1 );
-#endif            
-    }
-    
-    /* set read/write set create if not exists */
-    const std::int32_t flags( O_RDWR | O_CREAT | O_EXCL );
-    /* set read/write by user */
-    const mode_t mode( S_IWUSR | S_IRUSR );
-    fd  = shm_open( key.c_str(), 
-                    flags, 
-                    mode );
-    if( fd == failure )
+    auto handle_open_failure = [&]( const shm_key_t &key ) -> void*
     {
 #if USE_CPP_EXCEPTIONS==1      
         std::stringstream ss;
@@ -207,9 +177,36 @@ shm::init( const shm::key_type &key,
             return( nullptr );
 #endif
         }
+    };
+
+    if( nbytes == 0 )
+    {
+#if USE_CPP_EXCEPTIONS==1      
+       throw bad_shm_alloc( "nbytes cannot be zero when allocating memory!" );
+#else
+        return( nullptr );
+#endif
     }
     
-    /** before truncation, lets do a sanity check **/
+    /** 
+     * NOTE: 
+     * - actual allocation size should be alloc_bytes,
+     * user has no idea so we'll re-calc this at the  end
+     * when we unmap the data.
+     * - This is the same out that is returned at the end
+     * for ease of keeping track of code between the two
+     * different versions. 
+     */
+    void *out( nullptr );
+    
+
+    /**
+     * NOTE: this is largely for truncation purposes,
+     * but this is also needed as a sanity check and 
+     * some off the values are needed elsewhere so let's
+     * do this before we go into POSIX/SystemV specific 
+     * code. 
+     */
     const auto num_phys_pages( sysconf( _SC_PHYS_PAGES ) );
     const auto page_size( sysconf( _SC_PAGE_SIZE ) );
     const auto total_possible_bytes( num_phys_pages * page_size );
@@ -226,8 +223,6 @@ shm::init( const shm::key_type &key,
          return( nullptr );
 #endif
     }
-    /* else begin truncate */
-    /* else begin mmap */
     /** get allocations size including extra dummy page **/
     const auto alloc_bytes( 
        static_cast< std::size_t >( 
@@ -235,6 +230,40 @@ shm::init( const shm::key_type &key,
              static_cast< float >( nbytes) / 
             static_cast< float >( page_size ) ) + 1 ) * page_size 
     );
+    
+#if _USE_POSIX_SHM_ == 1
+    int fd( shm::failure  );
+    //stupid hack to get around platforms that are
+    //using LD_PRELOAD, e.g., dynamic binary tools
+    struct stat st;
+    std::stringstream path;
+    path << "/dev/shm/" << key;
+    if( stat( path.str().c_str(), &st ) == 0 )
+    {
+#if USE_CPP_EXCEPTIONS==1      
+        std::stringstream ss;
+#endif
+#if USE_CPP_EXCEPTIONS==1      
+            ss << "SHM Handle already exists \"" << key << "\" already exists, please use open\n";
+            throw shm_already_exists( ss.str() );
+#else            
+            return( (void*)-1 );
+#endif            
+    }
+    
+    /* set read/write set create if not exists */
+    const std::int32_t flags( O_RDWR | O_CREAT | O_EXCL );
+    /* set read/write by user */
+    const mode_t mode( S_IWUSR | S_IRUSR );
+    fd  = shm_open( key, 
+                    flags, 
+                    mode );
+    if( fd == failure )
+    {
+        //if using exceptions you won't return
+        return( handle_open_failure( key ) );
+    }
+    
     if( ftruncate( fd, alloc_bytes ) != shm::success )
     {
 #if USE_CPP_EXCEPTIONS==1      
@@ -242,19 +271,13 @@ shm::init( const shm::key_type &key,
        ss << "Failed to truncate shm for file descriptor (" << fd << ") ";
        ss << "with number of bytes (" << nbytes << ").  Error code returned: ";
        ss << std::strerror( errno );
-       shm_unlink( key.c_str() );
+       shm_unlink( key );
        throw bad_shm_alloc( ss.str() );
 #else
-       shm_unlink( key.c_str() );
+       shm_unlink( key );
        return( nullptr );
 #endif
     }
-    /** 
-     * NOTE: actual allocation size should be alloc_bytes,
-     * user has no idea so we'll re-calc this at the  end
-     * when we unmap the data.
-     */
-    void *out( nullptr );
 
     /** 
      * NOTE: might be useful to change page size to something larger than default
@@ -284,22 +307,44 @@ shm::init( const shm::key_type &key,
        std::stringstream ss;
        ss << "Failed to mmap shm region with the following error: " << 
          std::strerror( errno ) << ",\n" << "unlinking.";
-       shm_unlink( key.c_str() );
+       shm_unlink( key );
        throw bad_shm_alloc( ss.str() );
 #else
-       shm_unlink( key.c_str() );
+       shm_unlink( key );
        return( nullptr );
 #endif
     }
 /**
  * ###### END POSIX SECTION ######
  */
-#elif _USE_SYSTEMV_SEM_ == 1
+#elif _USE_SYSTEMV_SHM_ == 1
 /**
  * ###### START SYSTEM-V SECTION  ######
  */
+    /** first time you try to open it **/
+    const auto shmid = 
+        shmget( key, alloc_bytes, IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR );
+    if( shmid == shm::failure ) 
+    {
+        //if using exceptions, you won't return from this
+        return( handle_open_failure( key ) );
+    }
 
-    
+    out  = shmat( shmid, nullptr, 0 );
+    if( out == (void*)-1 )
+    {
+#if USE_CPP_EXCEPTIONS==1      
+       std::stringstream ss;
+       ss << "Failed to mmap shm region with the following error: " << 
+         std::strerror( errno ) << ",\n" << "unlinking.";
+       throw bad_shm_alloc( ss.str() );
+#else
+       return( nullptr );
+#endif
+    }
+
+
+#endif /** end switch between posix/sysV **/    
     if( zero )
     {
        /* everything theoretically went well, lets initialize to zero */
@@ -320,26 +365,37 @@ shm::init( const shm::key_type &key,
 
 
 void*
-shm::open( const std::string &key )
+shm::open( const shm_key_t &key )
 {
-   /* accept no zero length keys */
-   assert( key.length() > 0 );
+   /**
+    * just like with init, use same output
+    * pointer stack location for both. 
+    */
+   void *out( nullptr );
+    
+    auto handle_open_failure = [&]( const shm_key_t &key ) -> void*
+    {
+#if USE_CPP_EXCEPTIONS==1      
+        std::stringstream ss;
+        ss << 
+            "Failed to open shm with key \"" << key << "\", with the following error code (";
+        ss << std::strerror( errno ) << ")"; 
+        throw bad_shm_alloc( ss.str() );
+#else
+        return( nullptr );
+#endif
+
+    };
+#if _USE_POSIX_SHM_ == 1
    int fd( shm::failure );
    const int flags( O_RDWR | O_CREAT );
    mode_t mode( 0 );
-   fd = shm_open( key.c_str(), 
+   fd = shm_open( key, 
                   flags, 
                   mode ); 
    if( fd == failure )
    {
-#if USE_CPP_EXCEPTIONS==1      
-      std::stringstream ss;
-      ss << "Failed to open shm with key \"" << key << "\", with the following error code: ";
-      ss << std::strerror( errno ); 
-      throw bad_shm_alloc( ss.str() );
-#else
-        return( nullptr );
-#endif
+        return( handle_open_failure( key ) );
    }
    struct stat st;
    std::memset( &st, 
@@ -352,14 +408,13 @@ shm::open( const std::string &key )
       std::stringstream ss;
       ss << "Failed to stat shm region with the following error: " << std::strerror( errno ) << ",\n";
       ss << "unlinking.";
-      shm_unlink( key.c_str() );
+      shm_unlink( key );
       throw bad_shm_alloc( ss.str() );
 #else
-      shm_unlink( key.c_str() );
+      shm_unlink( key );
       return( nullptr );
 #endif
    }
-   void *out( nullptr );
    out = mmap( nullptr, 
                st.st_size, 
                (PROT_READ | PROT_WRITE), 
@@ -372,10 +427,10 @@ shm::open( const std::string &key )
       std::stringstream ss;
       ss << "Failed to mmap shm region with the following error: " << std::strerror( errno ) << ",\n";
       ss << "unlinking.";
-      shm_unlink( key.c_str() );
+      shm_unlink( key );
       throw bad_shm_alloc( ss.str() );
 #else
-      shm_unlink( key.c_str() );
+      shm_unlink( key );
       return( nullptr );
 #endif
    }
@@ -383,21 +438,52 @@ shm::open( const std::string &key )
    ::close( fd );
    /* done, return mem */
    return( out );
+
+/** END POSIX MEMORY **/
+#elif _USE_SYSTEMV_SHM_ == 1
+/** START SYSTEMV MEMORY **/
+
+//STEP1 shmget
+    const auto shmid = 
+        shmget( key, sizeof(int), S_IRUSR | S_IWUSR );
+    if( shmid == shm::failure ) 
+    {
+        //if using exceptions, you won't return from this
+        return( handle_open_failure( key ) );
+    }
+//STEP2 shmat
+    out = shmat(shmid, nullptr, 0);
+    if( out == (void*)-1 ) 
+    {
+#if USE_CPP_EXCEPTIONS==1      
+        std::stringstream ss;
+        ss << "Failed to SHM attach the shm region with the following error (" 
+            <<  std::strerror( errno ) << ").";
+        throw bad_shm_alloc( ss.str() );
+#else
+        return( nullptr );
+#endif
+    }
+/** END SYSTEMV MEMORY **/
+#endif
+    //if we're here, everything theoretically worked
+    return( out );
 }
 
 bool
-shm::close( const std::string &key,
+shm::close( const shm_key_t &key,
             void **ptr,
             const std::size_t nbytes,
             const bool zero,
             const bool unlink )
 {
+   if( zero && (ptr != nullptr) && ( *ptr != nullptr ) )
+   {
+      std::memset( *ptr, 0x0, nbytes );
+   }
+#if _USE_POSIX_SHM_ == 1
    if( ptr != nullptr )
    {
-      if( zero && ( *ptr != nullptr ) )
-      {
-         std::memset( *ptr, 0x0, nbytes );
-      }
       /** get allocations size including extra dummy page **/
       const auto page_size( sysconf( _SC_PAGESIZE ) );
       const auto alloc_bytes( 
@@ -416,7 +502,7 @@ shm::close( const std::string &key,
    }
    if( unlink )
    {
-      if( shm_unlink( key.c_str() ) != 0 )
+      if( shm_unlink( key ) != 0 )
       {
 #if USE_CPP_EXCEPTIONS==1      
          switch( errno )
@@ -433,7 +519,58 @@ shm::close( const std::string &key,
 #endif         
       }
    }
-   return( true );
+   //jump to return true if here. 
+/** END POSIX MEMORY IMPL **/
+#elif _USE_SYSTEMV_SHM_ == 1
+/** START SYSTEMV IMPL **/
+    /**
+     * we could have gotten here b/c something failed and the 
+     * user code is now calling close on an invalid shm seg. 
+     * so let's stat first to be sure. 
+     */
+     const auto shmid = 
+         shmget( key, sizeof(int), S_IRUSR | S_IWUSR );
+     if( shmid == shm::failure ) 
+     {
+        /**
+         * could check if( errno == ENOENT )
+         * but not too much point here given
+         * what we want to close doesn't exist. 
+         */
+         return( true );
+     }
+    /**
+     * NOTE: This may not work quite perfectly b/c 
+     * if there are M communicating pairs and you 
+     * call this and only one happens to be detached,
+     * then this may cause the segment to be deleted.
+     */
+    if(shmctl(shmid, IPC_RMID, nullptr) == -1) {
+#if USE_CPP_EXCEPTIONS==1      
+       std::stringstream ss;
+       ss << "Failed to set the SystemV memory region to exit on detach, non-fatal error (" 
+         << std::strerror( errno ) << ")\n";
+       throw bad_shm_alloc( ss.str() );
+#else
+       return( out );
+#endif
+    }
+     //else, it exists
+     if( shmdt( *ptr ) == shm::failure ) 
+     {
+#if USE_CPP_EXCEPTIONS==1
+        std::stringstream ss;
+        ss << "Failed to detach SHM with error code (" 
+            <<  std::strerror( errno ) << ").";
+        throw invalid_key_exception( ss.str() );
+#else
+        return( nullptr );
+#endif
+     }
+
+/** END SYSTEMV IMPL **/
+#endif
+    return( true );
 }
 
 bool

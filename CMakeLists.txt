@@ -19,7 +19,11 @@ endif()
 
 
 mark_as_advanced( USE_POSIX_SHM )
-if( NOT DEFINED USE_POSIX_SHM )
+##
+# basically if no memory type specified, assume
+# POSIX. 
+##
+if( NOT DEFINED USE_POSIX_SHM AND NOT DEFINED USE_SYSV_SHM )
 set( USE_POSIX_SHM 1 CACHE BOOL "Use POSIX shared memory vs. System V (this is default)" )
 endif()
 
@@ -30,9 +34,11 @@ endif()
 
 
 if( USE_POSIX_SHM )
+message( STATUS "Using POSIX SHM interface" )
 add_definitions( "-D_USE_POSIX_SHM_=1" )
 elseif( USE_SYSV_SHM )
-add_definitions( "-D_USE_SYSTEMV_SEM_=1" )
+message( STATUS "Using SystemV SHM interface" )
+add_definitions( "-D_USE_SYSTEMV_SHM_=1" )
 endif()
 
 

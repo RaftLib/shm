@@ -31,4 +31,18 @@
 #if ( _USE_SYSTEMV_SHM_ == 1 )
 //for key_t type 
 #include <sys/shm.h>
+#elif (_USE_POSIX_SHM_ == 1)
+static constexpr auto shm_key_length = 24;
 #endif
+
+
+using shm_key_t
+    =
+#if (_USE_POSIX_SHM_ == 1) 
+        char[ shm_key_length ]
+#elif (_USE_SYSTEMV_SHM_ == 1)
+        key_t
+#else
+#warning( "either SHM or POSIX must be specified, check configuration!" )
+#endif
+;

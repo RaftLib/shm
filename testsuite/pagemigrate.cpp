@@ -89,10 +89,10 @@ struct Data
 {
    Data( void **ptr ) : ptr( ptr )
    {
-      shm::genkey( key_buff, 30 );
+      shm::gen_key( key, 42 );
    }
-   std::string key_buff;
-   void **ptr;
+   shm_key_t    key;
+   void         **ptr;
 };
 
 void* thr( void *ptr )
@@ -103,7 +103,7 @@ void* thr( void *ptr )
    try
    {
       *data->ptr = reinterpret_cast< std::int32_t* >( 
-        shm::init( data->key_buff, 0x1000 ) 
+        shm::init( data->key, 0x1000 ) 
        );
    }
    catch( bad_shm_alloc ex )
@@ -156,7 +156,7 @@ main( int argc, char **argv )
    assert( pages_after == my_numa );
    
    /** if we get to this point then we assume that the mem is writable **/
-   shm::close( d.key_buff, 
+   shm::close( d.key, 
                reinterpret_cast<void**>(&ptr), 
                0x1000,
                true,

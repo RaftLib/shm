@@ -63,19 +63,6 @@ public:
    ~shm()   = delete;
 
 
-#if( _USE_SYSTEMV_SEM_ == 1)    
-    //don't need this for POSIX
-    constexpr static int key_length = 32;
-#endif 
-
-    using key_type = 
-#if (_USE_POSIX_SHM_ == 1 )
-        char[ key_length ]
-#elif( _USE_SYSTEMV_SEM_ == 1)
-        key_t
-#endif
-;
-   
    /**
     * genkey - This function generates a key to be used 
     * in the subsequent calls to init/open for an shm
@@ -92,15 +79,14 @@ public:
     */
     static
     void 
-    generate_key( const int        max_length,
-                  const int        proj_id,
-                  shm::key_type    &key )
+    gen_key( shm_key_t &key, const int proj_id );
+                  
+                  
 
     static 
     bool      
-    key_copy( shm::key_type           &dst_key,
-              const   std::size_t     dst_key_length, 
-              const   shM::key_type   src_key );
+    key_copy( shm_key_t           &dst_key,
+              const   shm_key_t   src_key );
 
    /**
     * init - initialize SHM segment with file descriptor
@@ -117,7 +103,7 @@ public:
     * @return  void* - ptr to beginning of memory allocated
     * @exception - 
     */
-   static void*   init( const std::string &key, 
+   static void*   init( const shm_key_t   &key, 
                         const std::size_t nbytes,
                         const bool   zero = true,
                         void   *ptr = nullptr );
@@ -129,7 +115,7 @@ public:
     * @return  void* - start of allocated memory, or NULL if
     *                  error
     */
-   static void*   open( const std::string &key );
+   static void*   open( const shm_key_t &key );
 
    /**
     * close - returns true if successful, false otherwise.
@@ -150,11 +136,11 @@ public:
     * @param   unlink - call unlink, decrement OS open count for handle
     * @return  bool - true if successful.
     */
-   static bool    close( const std::string &key, 
-                         void **ptr,
-                         const std::size_t nbytes,
-                         const bool   zero = false ,
-                         const bool   unlink = false );
+   static bool    close( const shm_key_t    &key, 
+                         void               **ptr,
+                         const std::size_t  nbytes,
+                         const bool         zero = false ,
+                         const bool         unlink = false );
 
    
    /**
@@ -164,7 +150,7 @@ public:
     * @param - nitems, number of items to init of type T
     */
    template < class T > 
-      static T* einit( const std::string &&key,
+      static T* einit( const shm_key_t   &&key,
                        const std::size_t nitems )
    {
       return( reinterpret_cast< T* >( 
@@ -181,7 +167,7 @@ public:
     * @param - nitems, number of items to init of type T
     */
    template < class T > 
-      static T* einit( const std::string &key,
+      static T* einit( const shm_key_t &key,
                        const std::size_t nitems )
    {
       return( reinterpret_cast< T* >( 
@@ -197,7 +183,7 @@ public:
     * @param - key, std::string&&
     */
    template < class T >
-      static T* eopen( const std::string &&key )
+      static T* eopen( const shm_key_t &&key )
    {
       return( reinterpret_cast< T* >( shm::open( key ) ) );
    }
@@ -208,7 +194,7 @@ public:
     * @param - key, std::string&
     */
    template < class T >
-      static T* eopen( const std::string &key )
+      static T* eopen( const shm_key_t &key )
    {
       return( reinterpret_cast< T* >( shm::open( key ) ) );
    }
