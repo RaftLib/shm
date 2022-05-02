@@ -64,7 +64,7 @@ jobs:
         cmakeBuildType: Release  
         buildDirectory: "${{ github.workspace }}/../../_temp/macos"
         buildWithCMake: true
-        cmakeAppendedArgs: '-DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/../../_temp/macos/install" -DUSE_POSIX_SHM=1'
+        cmakeAppendedArgs: "-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/../../_temp/macos/install -DUSE_POSIX_SHM=1"
         buildWithCMakeArgs: --config Release
         
     - name: 'Run CTest'
@@ -83,7 +83,7 @@ jobs:
         cmakeBuildType: Release  
         buildDirectory: "${{ github.workspace }}/../../_temp/macos"
         buildWithCMake: true
-        cmakeAppendedArgs: '-DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/../../_temp/macos/install" -DUSE_SYSV_SHM=1'
+        cmakeAppendedArgs: "-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/../../_temp/macos/install -DUSE_SYSV_SHM=1"
         buildWithCMakeArgs: --config Release
         
     - name: 'Run CTest'
