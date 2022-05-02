@@ -28,6 +28,14 @@ cmake ../build -G<build system of your choice> -DCMAKE_BUILD_TYPE=Release
 [make | ninja] test
 ```
 
+## Build options
+* There are the usual options (e.g., Release/Debug), there's also...
+* ```-DUSE_SYSV_MEMORY=1``` which will build the library using the SystemV SHM interface
+* ```-DUSE_POSIX_SHM=1``` which will build the library using the POSIX SHM interface
+* ```-DCPP_EXCEPTIONS=0``` which will remove the use of CPP exceptions, the return
+values in this case must be checked (e.g., check for _nullptr_ vs. waiting for the 
+cpp exception. 
+
 # Install
 * Just run ```[make | ninja] install```
 

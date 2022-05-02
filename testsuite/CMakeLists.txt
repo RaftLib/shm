@@ -9,8 +9,6 @@ set( TESTAPPS   alloc
                 outofrange
                 wrongkey
                 zerobytes
-                zerokeylength 
-                tworandomkeys 
                 ${NUMA_TESTS}
                  )
 else()

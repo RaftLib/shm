@@ -25,9 +25,8 @@
 int
 main( int argc, char **argv )
 {
-   const auto key_length( 22 );
-   std::string key;
-   shm::genkey( key, key_length );
+   shm_key_t key;
+   shm::gen_key( key, 42 );
    std::int32_t *ptr( nullptr );
    const auto nbytes( 0 );
    try

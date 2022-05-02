@@ -28,6 +28,9 @@
 #include "shm_module.hpp"
 
 
+
+
+
 #if USE_CPP_EXCEPTIONS==1
 class SHMException : public std::exception
 {
@@ -57,20 +60,35 @@ using invalid_key_exception              = TemplateSHMException< __COUNTER__ >;
 
 class shm{
 public:
-   
+
    shm()    = delete;
    ~shm()   = delete;
-   
+
+
    /**
-    * genkey - generate a random key to be stored
-    * in the std::string key. The key will be hashed
-    * to ensure that no two keys will be identical,
-    * this function is thread safe. 
+    * genkey - This function generates a key to be used 
+    * in the subsequent calls to init/open for an shm
+    * segment. The function signature looks a bit odd given
+    * the same function signature generates teh key for both
+    * SystemV and POSIX shared memory. 
     *
-    * @param   key - std::string&
-    * @param   length - const std::size_t
+    * @param max_length - maximum length for key
+    * @param proj_id - random integer, if you have multiple
+    * shared memory regions, the first 8b of this should ideally
+    * differ. 
+    * @param key - reference to where you want the key stored. 
+    * @return void 
     */
-   static void genkey( std::string &key, std::size_t length );
+    static
+    void 
+    gen_key( shm_key_t &key, const int proj_id );
+                  
+                  
+
+    static 
+    bool      
+    key_copy( shm_key_t           &dst_key,
+              const   shm_key_t   src_key );
 
    /**
     * init - initialize SHM segment with file descriptor
@@ -87,7 +105,7 @@ public:
     * @return  void* - ptr to beginning of memory allocated
     * @exception - 
     */
-   static void*   init( const std::string &key, 
+   static void*   init( const shm_key_t   &key, 
                         const std::size_t nbytes,
                         const bool   zero = true,
                         void   *ptr = nullptr );
@@ -99,7 +117,7 @@ public:
     * @return  void* - start of allocated memory, or NULL if
     *                  error
     */
-   static void*   open( const std::string &key );
+   static void*   open( const shm_key_t &key );
 
    /**
     * close - returns true if successful, false otherwise.
@@ -120,11 +138,11 @@ public:
     * @param   unlink - call unlink, decrement OS open count for handle
     * @return  bool - true if successful.
     */
-   static bool    close( const std::string &key, 
-                         void **ptr,
-                         const std::size_t nbytes,
-                         const bool   zero = false ,
-                         const bool   unlink = false );
+   static bool    close( const shm_key_t    &key, 
+                         void               **ptr,
+                         const std::size_t  nbytes,
+                         const bool         zero = false ,
+                         const bool         unlink = false );
 
    
    /**
@@ -134,7 +152,7 @@ public:
     * @param - nitems, number of items to init of type T
     */
    template < class T > 
-      static T* einit( const std::string &&key,
+      static T* einit( const shm_key_t   &&key,
                        const std::size_t nitems )
    {
       return( reinterpret_cast< T* >( 
@@ -151,7 +169,7 @@ public:
     * @param - nitems, number of items to init of type T
     */
    template < class T > 
-      static T* einit( const std::string &key,
+      static T* einit( const shm_key_t &key,
                        const std::size_t nitems )
    {
       return( reinterpret_cast< T* >( 
@@ -167,7 +185,7 @@ public:
     * @param - key, std::string&&
     */
    template < class T >
-      static T* eopen( const std::string &&key )
+      static T* eopen( const shm_key_t &&key )
    {
       return( reinterpret_cast< T* >( shm::open( key ) ) );
    }
@@ -178,7 +196,7 @@ public:
     * @param - key, std::string&
     */
    template < class T >
-      static T* eopen( const std::string &key )
+      static T* eopen( const shm_key_t &key )
    {
       return( reinterpret_cast< T* >( shm::open( key ) ) );
    }

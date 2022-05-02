@@ -27,9 +27,9 @@
 int
 main( int argc, char **argv )
 {
-   static const auto key_length( 16 );
-   std::string key;
-   shm::genkey( key, key_length );
+   shm_key_t key;
+   shm::gen_key( key, 42 );
+   std::cerr << key << "\n";
    std::int32_t *ptr( nullptr );
    try
    {
@@ -43,6 +43,7 @@ main( int argc, char **argv )
    for( int i( 0 ); i < 100; i++ )
    {  
       ptr[ i ] = i;
+      std::cout << ptr[ i ] << "\n";
    }
    std::int32_t *ptr2( nullptr );
    try
@@ -54,6 +55,7 @@ main( int argc, char **argv )
       std::cerr << ex.what() << "\n";
       exit( EXIT_FAILURE );
    }
+   
    if(  std::memcmp( ptr,ptr2, 100 * sizeof( std::int32_t ) ) != 0 )
    {
       shm::close( key, 
@@ -64,7 +66,9 @@ main( int argc, char **argv )
       /** memory regions aren't equal, fail **/
       assert( false );
    }
-   /** if we get to this point then we assume that the mem is writable **/
+   
+
+
    shm::close( key, 
                reinterpret_cast<void**>( &ptr), 
                0x1000,

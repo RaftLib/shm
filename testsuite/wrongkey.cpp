@@ -27,9 +27,9 @@
 int
 main( int argc, char **argv )
 {
-   static const auto key_length( 30 );
-   std::string key;
-   shm::genkey( key, key_length );
+   shm_key_t key;
+   shm::gen_key( key, 42 );
+   
    std::int32_t *ptr( nullptr );
    const auto nbytes( 0x1000 );
    try
@@ -44,7 +44,9 @@ main( int argc, char **argv )
    /** if we get to this point then we assume that the mem is writable **/
    try
    {
-      shm::close( "foobar", 
+      shm_key_t wrong_key;
+      shm::gen_key( wrong_key, 42 );
+      shm::close( wrong_key, 
                   reinterpret_cast<void**>( &ptr ), 
                   nbytes,
                   true,
@@ -61,8 +63,11 @@ main( int argc, char **argv )
    }
    /**
     * if the exception catch above was executed then
-    * this will should be fine after the file handle dissappears
+    * the file handle shouldn't exist
     */
+   //FIXME - set this up correctly for SYSTEMV as well,
+   //this only works currently for POSIX. 
+#if _USE_POSIX_SEM_ == 1
    std::stringstream ss;
    ss << "/dev/shm/" << key;
    if( access( ss.str().c_str(), F_OK ) != -1 )
@@ -70,6 +75,9 @@ main( int argc, char **argv )
       std::cerr << "File exists!!\n";
       return( EXIT_FAILURE );
    }
+#elif _USE_SYSTEMV_SEM_ == 1
+
+#endif
    
    /** should get here and be done **/
    return( EXIT_SUCCESS );

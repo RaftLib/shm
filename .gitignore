@@ -11,3 +11,7 @@ Session.vim
 # auto-generated tag files
 tags
 ./build
+
+## OS X auto-generated files
+.DS_Store
+._.DS_Store

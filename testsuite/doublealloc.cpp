@@ -27,9 +27,9 @@
 int
 main( int argc, char **argv )
 {
-   static const auto key_length( 16 );
-   std::string key;
-   shm::genkey( key, key_length );
+   shm_key_t key;
+   shm::gen_key( key, 31 );
+
    std::int32_t *ptr( nullptr ), *ptr_2( nullptr );
    ptr = reinterpret_cast< std::int32_t* >( shm::init( key, 0x1000 ) );
    try
