@@ -39,7 +39,7 @@ else( NUMA_LIBRARY AND NUMA_INCLUDE_DIRS )
         ## no NUMA
         message( STATUS "no NUMA needed" )
         add_definitions( "-DPLATFORM_HAS_NUMA=0" )
-        set( CMAKE_NUMA_DEFINE "#define PLATFORM_HAS_NUMA 0" )
+        set( CMAKE_NUMA_DEFINE "0" )
         set( CMAKE_NUMA_LINK "" )
     else( HASNUMA EQUAL 0 )
         ## needs NUMA but we don't have it
