@@ -562,7 +562,7 @@ shm::close( const shm_key_t &key,
          << std::strerror( errno ) << ")\n";
        throw bad_shm_alloc( ss.str() );
 #else
-       return( out );
+       return( false );
 #endif
     }
      //else, it exists
@@ -574,7 +574,7 @@ shm::close( const shm_key_t &key,
             <<  std::strerror( errno ) << ").";
         throw invalid_key_exception( ss.str() );
 #else
-        return( nullptr );
+        return( false );
 #endif
      }
 
