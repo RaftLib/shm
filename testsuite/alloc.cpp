@@ -30,6 +30,7 @@ main( int argc, char **argv )
    shm_key_t key;
    shm::gen_key( key, 42);
    std::int32_t *ptr( nullptr );
+#if (USE_CPP_EXCEPTIONS==1)   
    try
    {
       ptr = reinterpret_cast< std::int32_t* >( shm::init( key, 0x1000 ) );
@@ -39,6 +40,15 @@ main( int argc, char **argv )
       std::cerr << ex.what() << "\n";
       exit( EXIT_FAILURE );
    }
+#else
+   ptr = reinterpret_cast< std::int32_t* >( shm::init( key, 0x1000 ) );
+   if( ptr == (void*)-1 && ptr != 0 )
+   {
+      std::fprintf( stderr, "Failed to initialize SHM ptr, exiting!" );
+      exit( EXIT_FAILURE );
+   }
+
+#endif
    for( int i( 0 ); i < 100; i++ )
    {  
       ptr[ i ] = i;

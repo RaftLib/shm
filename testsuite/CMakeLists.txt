@@ -9,12 +9,18 @@ set( TESTAPPS   alloc
                 outofrange
                 wrongkey
                 zerobytes
+                two_process 
                 ${NUMA_TESTS}
                  )
 else()
 ##
 # need to add idefs to all shm test cases
 ##
+set( TESTAPPS   
+                alloc
+                two_process 
+                ${NUMA_TESTS}
+                 )
 endif()
 include_directories( ${PROJECT_SOURCE_DIR}/include )
 

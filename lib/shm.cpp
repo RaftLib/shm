@@ -238,7 +238,7 @@ shm::init( const shm_key_t     &key,
        static_cast< std::size_t >( 
           std::ceil(  
              static_cast< float >( nbytes) / 
-            static_cast< float >( page_size ) ) + 1 ) * page_size 
+            static_cast< float >( page_size ) ) + 1 /** one extra page for guard **/ ) * page_size 
     );
     
 #if _USE_POSIX_SHM_ == 1
@@ -333,7 +333,7 @@ shm::init( const shm_key_t     &key,
  */
     /** first time you try to open it **/
     const auto shmid = 
-        shmget( key, alloc_bytes, IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR );
+        shmget( key, alloc_bytes, IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP );
     if( shmid == shm::failure ) 
     {
         //if using exceptions, you won't return from this
@@ -361,6 +361,7 @@ shm::init( const shm_key_t     &key,
        std::memset( out, 0x0, nbytes );
     }
     char *temp( reinterpret_cast< char* >( out ) );
+    /** we allocate one extra page **/
     if( mprotect( (void*) &temp[ alloc_bytes - page_size ],
                    page_size, 
                    PROT_NONE ) != 0 )
