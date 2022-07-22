@@ -82,7 +82,8 @@ main( int argc, char **argv )
             }
 
 #endif
-            *ptr = 0x1137;
+            __atomic_store_n( ptr, 0x1137, __ATOMIC_RELEASE );
+
             shm::close( key, 
                         reinterpret_cast<void**>( &ptr), 
                         0x1000,
@@ -98,7 +99,11 @@ main( int argc, char **argv )
         default:
         {
             //spin on value being written from child
-            while( *ptr != 0x1137 ); 
+            type_t val = 0;
+            while( val != 0x1137 )
+            {
+                __atomic_load( ptr, &val, __ATOMIC_RELAXED );
+            } 
             std::fprintf( stdout, "leet\n" );
             int status = 0;
             waitpid( -1, &status, 0 );
