@@ -520,8 +520,9 @@ shm::close( const shm_key_t &key,
          {
             case( ENOENT ):
             {
-               throw invalid_key_exception( "File descriptor to unlink does not exist!" );
+                throw invalid_key_exception( "Invalid file descriptor specified" );
             }
+            break;
             default:
             {
                 throw invalid_key_exception( "Undefined error, check error codes" );
@@ -543,12 +544,14 @@ shm::close( const shm_key_t &key,
          shmget( key, sizeof(int), S_IRUSR | S_IWUSR );
      if( shmid == shm::failure ) 
      {
-        /**
-         * could check if( errno == ENOENT )
-         * but not too much point here given
-         * what we want to close doesn't exist. 
-         */
-         return( true );
+#if USE_CPP_EXCEPTIONS==1
+        if( errno == ENOENT )
+        {
+            throw invalid_key_exception( "SHM key doesn't exist" );
+        }
+#else
+        return( true );
+#endif
      }
     /**
      * NOTE: This may not work quite perfectly b/c 
@@ -556,8 +559,13 @@ shm::close( const shm_key_t &key,
      * call this and only one happens to be detached,
      * then this may cause the segment to be deleted.
      */
-    if(shmctl(shmid, IPC_RMID, nullptr) == -1) {
-#if USE_CPP_EXCEPTIONS==1      
+    if(shmctl(shmid, IPC_RMID, nullptr) == -1) 
+    {
+#if USE_CPP_EXCEPTIONS==1
+       if( errno == EINVAL || errno == EIDRM )
+       {
+          throw invalid_key_exception( "Invalid SHM key" );
+       }
        std::stringstream ss;
        ss << "Failed to set the SystemV memory region to exit on detach, non-fatal error (" 
          << std::strerror( errno ) << ")\n";
@@ -566,7 +574,7 @@ shm::close( const shm_key_t &key,
        return( false );
 #endif
     }
-     //else, it exists
+     //else we're here, and it exists
      if( shmdt( *ptr ) == shm::failure ) 
      {
 #if USE_CPP_EXCEPTIONS==1

@@ -45,7 +45,7 @@ main( int argc, char **argv )
    try
    {
       shm_key_t wrong_key;
-      shm::gen_key( wrong_key, 42 );
+      shm::gen_key( wrong_key, 47 );
       shm::close( wrong_key, 
                   reinterpret_cast<void**>( &ptr ), 
                   nbytes,
@@ -54,6 +54,7 @@ main( int argc, char **argv )
    }
    catch( invalid_key_exception ex )
    {
+      std::fprintf( stdout, "Exception caught, exiting cleanly\n" );
       /** real key so we don't manually cleanup **/
       shm::close( key, 
                   reinterpret_cast<void**>( &ptr), 
