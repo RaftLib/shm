@@ -86,8 +86,8 @@ main( int argc, char **argv )
             shm::close( key, 
                         reinterpret_cast<void**>( &ptr), 
                         0x1000,
-                        false,
-                        true );
+                        false /** don't zero   **/,
+                        false /** don't unlink **/ );
         }
         break;
         case( -1 /** error, back to parent **/ ):
@@ -105,8 +105,8 @@ main( int argc, char **argv )
             shm::close( key, 
                         reinterpret_cast<void**>( &ptr), 
                         0x1000,
-                        true,
-                        true );
+                        true    /** zero   **/,
+                        true    /** unlink **/ );
         }
     }
     
