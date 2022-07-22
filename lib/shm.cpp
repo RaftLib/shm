@@ -559,7 +559,7 @@ shm::close( const shm_key_t &key,
      * call this and only one happens to be detached,
      * then this may cause the segment to be deleted.
      */
-    if(shmctl(shmid, IPC_RMID, nullptr) == -1) 
+    if(unlink /** only do this once **/  && shmctl(shmid, IPC_RMID, nullptr) == -1) 
     {
 #if USE_CPP_EXCEPTIONS==1
        if( errno == EINVAL || errno == EIDRM )
