@@ -52,3 +52,74 @@ Linux you'll have to compile with the -lrt, -lpthread and
 the future I might add a flag to compile without the NUMA
 features so that you can use the library without having 
 to install libnuma.
+
+## Two process example
+
+```cpp
+   shm_key_t key;
+   shm::gen_key( key, 42);
+   
+   using type_t = std::uint32_t;
+
+
+   type_t *ptr( nullptr );
+ 
+   /**
+    * NOTE: you can compile with or without CPP exceptions.
+    */
+   try
+   {
+      ptr = reinterpret_cast< type_t* >( shm::init( key, 0x1000, false, nullptr ) );
+   }
+   catch( bad_shm_alloc ex )
+   {
+      std::cerr << ex.what() << "\n";
+      exit( EXIT_FAILURE );
+   }
+   
+    auto child = fork();
+    switch( child )
+    {
+        case( 0 /** child **/ ):
+        {   
+            try
+            {
+                ptr = shm::eopen< type_t >( key );
+            }
+            catch( bad_shm_alloc ex )
+            {
+                std::cerr << ex.what() << "\n";
+                exit( EXIT_FAILURE );
+            }
+            *ptr = 0x1137;
+            shm::close( key, 
+                        reinterpret_cast<void**>( &ptr), 
+                        0x1000,
+                        false /** don't zero   **/,
+                        false /** don't unlink **/ );
+        }
+        break;
+        case( -1 /** error, back to parent **/ ):
+        {
+            exit( EXIT_FAILURE );
+        }
+        break;
+        default:
+        {
+            /**
+             * spin on value being written from child
+             * process.
+             */
+            while( *ptr != 0x1137 ); 
+            std::fprintf( stdout, "leet\n" );
+            int status = 0;
+            waitpid( -1, &status, 0 );
+            shm::close( key, 
+                        reinterpret_cast<void**>( &ptr), 
+                        0x1000,
+                        true    /** zero   **/,
+                        true    /** unlink **/ );
+        }
+    }
+
+```
