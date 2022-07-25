@@ -61,6 +61,8 @@ using invalid_key_exception              = TemplateSHMException< __COUNTER__ >;
 class shm{
 public:
 
+    
+
    shm()    = delete;
    ~shm()   = delete;
 

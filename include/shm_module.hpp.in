@@ -18,7 +18,7 @@
  * @author: Jonathan Beard
  * @version: Aug 27 2021
  */
-
+#include <limits>
 
 #ifndef SHM_MODULE_INCLUDE
 #define SHM_MODULE_INCLUDE 1
@@ -37,6 +37,7 @@
 //for key_t type 
 #include <sys/shm.h>
 using shm_key_t = key_t; 
+static constexpr auto shm_initial_key = std::numeric_limits< shm_key_t >::min();
 
 #ifndef _USE_SYSTEMV_SHM_ 
 #define _USE_SYSTEMV_SHM_ 1
@@ -51,6 +52,7 @@ static constexpr auto shm_key_length = 24;
 
 using shm_key_t = char[ shm_key_length ];
 
+static constexpr auto shm_initial_key = '\0';
 #ifndef _USE_SYSTEMV_SHM_ 
 #define _USE_SYSTEMV_SHM_ 0
 #endif

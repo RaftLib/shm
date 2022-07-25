@@ -31,7 +31,7 @@
 int
 main( int argc, char **argv )
 {
-   shm_key_t key;
+   shm_key_t key    = { shm_initial_key }; 
    shm::gen_key( key, 42);
    
    using type_t = std::uint32_t;
