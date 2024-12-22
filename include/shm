@@ -24,6 +24,8 @@
 #include <utility>
 #include <exception>
 #include <string>
+#include <cstdint>
+
 //platform specific definitions
 #include "shm_module.hpp"
 
